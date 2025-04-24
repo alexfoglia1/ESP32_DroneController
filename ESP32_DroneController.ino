@@ -10,6 +10,8 @@
 #define SCL_PIN 9
 #define UDP_PORT 1234
 
+#define IMU_UPDATE_MILLIS 10
+
 typedef struct
 {
   int16_t gyro_x;
@@ -18,6 +20,7 @@ typedef struct
   int16_t accel_x;
   int16_t accel_y;
   int16_t accel_z;
+  int64_t update_t;
 }__attribute__((packed)) mpu6050_data_t;
 
 
@@ -83,8 +86,8 @@ void onGetGyro(void* data)
 {
   Vec3D gyro;
   gyro.fields.x = mpu6050_data.gyro_x / 131.0f;
-  gyro.fields.x = mpu6050_data.gyro_y / 131.0f;
-  gyro.fields.x = mpu6050_data.gyro_z / 131.0f;
+  gyro.fields.y = mpu6050_data.gyro_y / 131.0f;
+  gyro.fields.z = mpu6050_data.gyro_z / 131.0f;
 
   udpServer->broadcast(gyro.bytes, sizeof(gyro.bytes));
 }
@@ -94,8 +97,8 @@ void onGetAccel(void* data)
 {
   Vec3D accel;
   accel.fields.x = mpu6050_data.accel_x / 16384.0f;
-  accel.fields.x = mpu6050_data.accel_y / 16384.0f;
-  accel.fields.x = mpu6050_data.accel_z / 16384.0f;
+  accel.fields.y = mpu6050_data.accel_y / 16384.0f;
+  accel.fields.z = mpu6050_data.accel_z / 16384.0f;
 
   udpServer->broadcast(accel.bytes, sizeof(accel.bytes));
 }
@@ -113,6 +116,7 @@ void setup()
   mpu6050_data.accel_x = 0x00;
   mpu6050_data.accel_y = 0x00;
   mpu6050_data.accel_z = 0x00;
+  mpu6050_data.update_t = -1;
   
   Wire.begin(SDA_PIN, SCL_PIN);
   mpu6050.initialize();
@@ -139,13 +143,18 @@ void setup()
 
 void loop()
 {
+  int64_t cur_t_micros = micros();
 // ------- IMU UPDATE -------
-  mpu6050.getMotion6(&mpu6050_data.accel_x,
-                     &mpu6050_data.accel_y,
-                     &mpu6050_data.accel_z,
-                     &mpu6050_data.gyro_x,
-                     &mpu6050_data.gyro_y,
-                     &mpu6050_data.gyro_z);
+  if (mpu6050_data.update_t < 0 || (cur_t_micros - mpu6050_data.update_t) > IMU_UPDATE_MILLIS * 1000)
+  {
+    mpu6050_data.update_t = cur_t_micros;
+    mpu6050.getMotion6(&mpu6050_data.accel_x,
+                      &mpu6050_data.accel_y,
+                      &mpu6050_data.accel_z,
+                      &mpu6050_data.gyro_x,
+                      &mpu6050_data.gyro_y,
+                      &mpu6050_data.gyro_z);
+  }
 // ------- IMU UPDATE -------
 
 // ------- MAINTENANCE UPDATE -------
