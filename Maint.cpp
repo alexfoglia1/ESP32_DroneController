@@ -1,0 +1,133 @@
+#include "Maint.h"
+
+#include <Arduino.h>
+#include <string.h>
+#include <stddef.h>
+
+
+Maintenance::Maintenance(int baud)
+{
+  Serial.begin(baud);
+  
+  _rxStatus = WAIT_CMD_STR;
+  _rxBytes = 0;
+  _expectedLen = 0;
+
+  memset(_rxBuffer, 0x00, sizeof(_rxBuffer));
+  for (int i = 0; i < N_MAINT_COMMANDS; i++)
+  {
+    _callbacks[i] = 0;
+  }
+  _selectedCallback = 0;
+
+
+  Serial.println("[OK] Maintenance Initialized");
+}
+
+
+void Maintenance::update()
+{
+  while (Serial.available())
+  {
+    uint8_t rxByte = Serial.read() & 0xFF;
+    updateFsm(rxByte);
+  }
+}
+
+
+void Maintenance::addCommandCallback(uint8_t command, maint_cmd_callback_t callback)
+{
+  if (command < N_MAINT_COMMANDS)
+  {
+    _callbacks[command] = callback;
+  }
+}
+
+
+void Maintenance::updateFsm(uint8_t rxByte)
+{
+  _rxBuffer[_rxBytes] = rxByte;
+  _rxBytes += 1;
+
+  switch (_rxStatus)
+  {
+    case WAIT_CMD_STR:  checkCmdStr((maint_msg_t*) _rxBuffer); break;
+    case WAIT_PAYLOAD:  checkPayload((maint_msg_t*) _rxBuffer, rxByte); break;
+    default: break;
+  }
+}
+
+
+uint8_t Maintenance::toCmdId(maint_msg_t* rxMsg)
+{
+  if (strncmp(rxMsg->cmd_str, SET_SSID_CMD_STR, strlen(SET_SSID_CMD_STR)) == 0)
+  {
+    return SET_SSID_CMD_ID;
+  }
+  if (strncmp(rxMsg->cmd_str, SET_PWD_CMD_STR, strlen(SET_PWD_CMD_STR)) == 0)
+  {
+    return SET_PWD_CMD_ID;
+  }
+  
+  return INCOMPLETE_CMD_ID;
+}
+
+
+void Maintenance::checkCmdStr(maint_msg_t* rxMsg)
+{
+  uint8_t cmdId = toCmdId(rxMsg);
+
+  switch (cmdId)
+  {
+    case SET_SSID_CMD_ID:
+      _expectedLen = MAX_PAYLOAD_SIZE_MAINT;
+      _selectedCallback = SET_SSID_CMD_ID;
+      Serial.println("[OK] <SET_SSID>");
+      _rxStatus = WAIT_PAYLOAD;
+
+    break;
+    case SET_PWD_CMD_ID:
+      _expectedLen = MAX_PAYLOAD_SIZE_MAINT;
+      _selectedCallback = SET_PWD_CMD_ID;
+      Serial.println("[OK] <SET_PWD>");
+      _rxStatus = WAIT_PAYLOAD;
+    break;
+    case INCOMPLETE_CMD_ID:
+      if (_rxBytes < sizeof(rxMsg->cmd_str))
+      {
+        break;
+      }
+    default:
+      Serial.println("[NOK] <UNKNOWN COMMAND>");
+      _rxStatus = WAIT_CMD_STR;
+      _rxBytes = 0;
+      _expectedLen = 0;
+      memset(_rxBuffer, 0x00, sizeof(_rxBuffer));
+    break;
+  }
+}
+
+
+void Maintenance::checkPayload(maint_msg_t* rxMsg, uint8_t lastByte)
+{
+  if (_rxBytes == _expectedLen || lastByte == '\0')
+  {
+    if (_callbacks[_selectedCallback] != NULL)
+    {
+      Serial.print("[OK] <");
+      Serial.print(_selectedCallback); Serial.print("> "); Serial.println((const char*)rxMsg->payload);   
+       
+      _callbacks[_selectedCallback](rxMsg->payload);
+    }
+    else
+    {
+      Serial.print("[NOK] <");
+      Serial.print(_selectedCallback); Serial.print("> "); Serial.println((const char*)rxMsg->payload);    
+    }
+
+    _rxStatus = WAIT_CMD_STR;
+    _rxBytes = 0;
+    _expectedLen = 0;
+    memset(_rxBuffer, 0x00, sizeof(_rxBuffer));
+  }
+}

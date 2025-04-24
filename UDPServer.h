@@ -10,15 +10,19 @@ typedef void (*msg_callback_t)(void*);
 class UDPServer
 {
   public:
-    UDPServer(const char* ssid, const char* password);
+    UDPServer();
+
+    bool attachToWifi(const char* ssid, const char* password);
     void listen(short port);
-    void addMessageCallback();
+    void addMessageCallback(int msgId, msg_callback_t callback);
+    void broadcast(uint8_t* pData, uint32_t len);
+    IPAddress localIp();
 
   private:
     void handleMessageRx(AsyncUDPPacket packet);
 
-    AsyncUDP udp;
-    msg_callback_t callbacks[MSGS_IN_SIZE];
+    AsyncUDP _udp;
+    msg_callback_t _callbacks[MSGS_IN_SIZE];
     
 };
 

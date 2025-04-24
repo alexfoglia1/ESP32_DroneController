@@ -19,6 +19,7 @@ typedef struct
   uint8_t payload[MAX_PAYLOAD_SIZE];
 } general_msg_t;
 
+
 typedef union
 {
   struct
