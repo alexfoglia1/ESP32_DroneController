@@ -25,14 +25,17 @@ ${CMAKE_SOURCE_DIR}/3rdparty/QJoysticks/Joysticks/VirtualJoystick.cpp
 ${CMAKE_SOURCE_DIR}/3rdparty/QJoysticks/QJoysticks.cpp
 ${CMAKE_SOURCE_DIR}/3rdparty/QJoysticks/QJoysticks.h
 
-${CMAKE_SOURCE_DIR}/src/MaintenanceGui.ui
+${CMAKE_SOURCE_DIR}/src/ControllerGui.ui
 ${CMAKE_SOURCE_DIR}/src/AutoscanComPortsGui.ui
 
-${CMAKE_SOURCE_DIR}/src/MaintenanceWindow.h
-${CMAKE_SOURCE_DIR}/src/MaintenanceWindow.cpp
+${CMAKE_SOURCE_DIR}/src/ControllerWindow.h
+${CMAKE_SOURCE_DIR}/src/ControllerWindow.cpp
 
-${CMAKE_SOURCE_DIR}/src/maint.h
-${CMAKE_SOURCE_DIR}/src/maint.cpp
+${CMAKE_SOURCE_DIR}/src/SerialComm.h
+${CMAKE_SOURCE_DIR}/src/SerialComm.cpp
+
+${CMAKE_SOURCE_DIR}/src/UdpComm.h
+${CMAKE_SOURCE_DIR}/src/UdpComm.cpp
 
 ${CMAKE_SOURCE_DIR}/src/PlotWidget.h
 ${CMAKE_SOURCE_DIR}/src/PlotWidget.cpp
@@ -50,7 +53,7 @@ ${CMAKE_SOURCE_DIR}/src/main.cpp
 )
 
 find_package(Threads REQUIRED)
-find_package(Qt5 COMPONENTS Core Gui Widgets SerialPort Concurrent REQUIRED)
+find_package(Qt5 COMPONENTS Core Gui Widgets SerialPort Network Concurrent REQUIRED)
 
 find_package(SDL2)
 
@@ -61,4 +64,4 @@ if (SDL2_FOUND)
 endif()
 
 target_include_directories(E32DC_RemoteController PUBLIC ${CMAKE_SOURCE_DIR}/src/ ${CMAKE_SOURCE_DIR}/3rdparty/QJoysticks/)
-target_link_libraries(E32DC_RemoteController Qt5::Core Qt5::Gui Qt5::Widgets Qt5::SerialPort Qt5::Concurrent)
+target_link_libraries(E32DC_RemoteController Qt5::Core Qt5::Gui Qt5::Widgets Qt5::SerialPort Qt5::Network Qt5::Concurrent)
