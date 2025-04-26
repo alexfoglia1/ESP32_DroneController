@@ -1,0 +1,4 @@
+#ifndef HEADINGDISPLAY_H
+#define HEADINGDISPLAY_H
+
+#endif
