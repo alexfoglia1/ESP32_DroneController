@@ -68,6 +68,18 @@ uint8_t Maintenance::toCmdId(maint_msg_t* rxMsg)
   {
     return SET_PWD_CMD_ID;
   }
+  if (strncmp(rxMsg->cmd_str, GET_PWD_CMD_STR, strlen(GET_PWD_CMD_STR)) == 0)
+  {
+    return GET_PWD_CMD_ID;
+  }
+  if (strncmp(rxMsg->cmd_str, GET_SSID_CMD_STR, strlen(GET_SSID_CMD_STR)) == 0)
+  {
+    return GET_SSID_CMD_ID;
+  }
+  if (strncmp(rxMsg->cmd_str, GET_IP_CMD_STR, strlen(GET_IP_CMD_STR)) == 0)
+  {
+    return GET_IP_CMD_ID;
+  }
   
   return INCOMPLETE_CMD_ID;
 }
@@ -92,6 +104,24 @@ void Maintenance::checkCmdStr(maint_msg_t* rxMsg)
       Serial.println("[OK] <SET_PWD>");
       _rxStatus = WAIT_PAYLOAD;
     break;
+    case GET_SSID_CMD_ID:
+      _expectedLen = 1;
+      _selectedCallback = GET_SSID_CMD_ID;
+      Serial.println("[OK] <GET_SSID>");
+      _rxStatus = WAIT_PAYLOAD;
+    break;
+    case GET_PWD_CMD_ID:
+      _expectedLen = 1;
+      _selectedCallback = GET_PWD_CMD_ID;
+      Serial.println("[OK] <GET_PWD>");
+      _rxStatus = WAIT_PAYLOAD;
+    break;
+    case GET_IP_CMD_ID:
+      _expectedLen = 1;
+      _selectedCallback = GET_IP_CMD_ID;
+      Serial.println("[OK] <GET_IP>");
+      _rxStatus = WAIT_PAYLOAD;
+    break;        
     case INCOMPLETE_CMD_ID:
       if (_rxBytes < sizeof(rxMsg->cmd_str))
       {

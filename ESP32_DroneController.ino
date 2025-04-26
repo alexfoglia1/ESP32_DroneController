@@ -98,6 +98,22 @@ void onRxPWD(void* rxPWD)
 
   tryWifiConnection((const char*) wifi_ssid, (const char*) wifi_pwd);
 }
+
+
+void onRxGetPWD(void* rxGetPWD)
+{
+  Serial.print("[OK] "); Serial.println(wifi_pwd);
+}
+
+void onRxGetSSID(void* rxGetSSID)
+{
+  Serial.print("[OK] "); Serial.println(wifi_ssid);
+}
+
+void onRxGetIP(void* rxGetIP)
+{
+  Serial.print("[OK] "); Serial.println(udpServer->localIp());
+}
 // ----------------- MAINTENANCE CALLBACKS ----------------- 
 
 
@@ -210,6 +226,9 @@ void setup()
 
   maint->addCommandCallback(SET_SSID_CMD_ID, onRxSSID);
   maint->addCommandCallback(SET_PWD_CMD_ID, onRxPWD);
+  maint->addCommandCallback(GET_PWD_CMD_ID, onRxGetPWD);
+  maint->addCommandCallback(GET_SSID_CMD_ID, onRxGetSSID);
+  maint->addCommandCallback(GET_IP_CMD_ID, onRxGetIP);
 // -------- MAINTENANCE INIT --------
 
 // -------- UDP SERVER INIT --------
