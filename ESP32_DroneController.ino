@@ -2,6 +2,7 @@
 #include "UDPServer.h"
 #include "MPU6050.h"
 #include "Wire.h"
+#include "ComplementaryFilter.h"
 
 #include <esp32-hal-ledc.h>
 #include <stddef.h>
@@ -53,6 +54,7 @@ UDPServer* udpServer;
 char wifi_ssid[256];
 char wifi_pwd[256];
 Preferences preferences;
+ComplementaryFilter attitudeFilter;
 
 void tryWifiConnection(const char* ssid, const char* pwd)
 {
@@ -122,6 +124,17 @@ void onGetAccel(void* data)
 }
 
 
+void onGetAttitude(void* data)
+{
+  Vec3D attitude;
+  attitude.fields.x = attitudeFilter.getRollDeg();
+  attitude.fields.y = attitudeFilter.getPitchDeg();
+  attitude.fields.z = attitudeFilter.getYawDeg();
+
+  udpServer->broadcast(attitude.bytes, sizeof(attitude.bytes));
+}
+
+
 void onControlCommand(void* data)
 {
   general_msg_t* msgIn = (general_msg_t*) data;
@@ -186,8 +199,10 @@ void setup()
   mpu6050_data.accel_z = 0x00;
   mpu6050_data.update_t = -1;
   
-  //Wire.begin(SDA_PIN, SCL_PIN);
-  //mpu6050.initialize();
+  Wire.begin(SDA_PIN, SCL_PIN);
+  mpu6050.initialize();
+  mpu6050.CalibrateAccel();
+  mpu6050.CalibrateGyro();
 // -------- MPU6050 INIT --------
 
 // -------- MAINTENANCE INIT --------
@@ -202,6 +217,7 @@ void setup()
   
   udpServer->addMessageCallback(GET_ACCEL_ID, onGetAccel);
   udpServer->addMessageCallback(GET_GYRO_ID,  onGetGyro);
+  udpServer->addMessageCallback(GET_ATTITUDE_ID, onGetAttitude);
   udpServer->addMessageCallback(CTRL_ID, onControlCommand);
   
   memset(wifi_ssid, 0x00, sizeof(wifi_ssid));
@@ -261,7 +277,7 @@ void loop()
 // ------- MOTORS UPDATE -------
 
 // ------- IMU UPDATE -------
-  if (mpu6050_data.update_t < 0 || (cur_t_micros - mpu6050_data.update_t) > IMU_UPDATE_MILLIS * 1000)
+  if ((mpu6050_data.update_t < 0) || ((cur_t_micros - mpu6050_data.update_t) >= (IMU_UPDATE_MILLIS * 1000)))
   {
     mpu6050_data.update_t = cur_t_micros;
     mpu6050.getMotion6(&mpu6050_data.accel_x,
@@ -270,6 +286,14 @@ void loop()
                       &mpu6050_data.gyro_x,
                       &mpu6050_data.gyro_y,
                       &mpu6050_data.gyro_z);
+
+    attitudeFilter.update(mpu6050_data.accel_x / 16384.0f,
+                          mpu6050_data.accel_y / 16384.0f,
+                          mpu6050_data.accel_z / 16384.0f,
+                          radians(mpu6050_data.gyro_x / 131.0f),
+                          radians(mpu6050_data.gyro_y / 131.0f),
+                          radians(mpu6050_data.gyro_z / 131.0f),
+                          IMU_UPDATE_MILLIS / 1000.0f);
   }
 // ------- IMU UPDATE -------
 

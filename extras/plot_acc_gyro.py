@@ -42,7 +42,7 @@ print(f"In ascolto su UDP port {PORT}...")
 
 while True:
     try:
-        sock.sendto(bytearray([2]), ("172.20.10.12", 1234))
+        sock.sendto(bytearray([3]), ("192.168.1.9", 1234))
         data, _ = sock.recvfrom(BUFFER_SIZE)
         if len(data) < 12:
             continue
