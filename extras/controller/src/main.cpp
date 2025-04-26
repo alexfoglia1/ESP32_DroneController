@@ -1,21 +1,21 @@
 #include <qserialport.h>
 #include <qapplication.h>
 #include <iostream>
+#include <qfont.h>
 
-#include "MaintenanceWindow.h"
-#include "maint.h"
+#include "ControllerWindow.h"
 
 
 int main(int argc, char** argv)
 {
-	QApplication* maint;
-	maint = new QApplication(argc, argv);
+	QApplication* ctrl;
+	ctrl = new QApplication(argc, argv);
 
 	QFont font("Verdana", 8);
 	qApp->setFont(font);
 
-	MaintenanceWindow* maintWindow = new MaintenanceWindow();
-	maintWindow->setVisible(true);
+	ControllerWindow* ctrlWindow = new ControllerWindow();
+	ctrlWindow->setVisible(true);
 
-	return maint->exec();
+	return ctrl->exec();
 }

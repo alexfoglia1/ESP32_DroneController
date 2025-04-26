@@ -15,7 +15,7 @@ class UDPServer
     bool attachToWifi(const char* ssid, const char* password);
     void listen(short port);
     void addMessageCallback(int msgId, msg_callback_t callback);
-    void broadcast(uint8_t* pData, uint32_t len);
+    void answerTo(uint8_t msgId, uint8_t* pData, uint32_t len);
     IPAddress localIp();
 
   private:

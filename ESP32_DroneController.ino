@@ -125,7 +125,7 @@ void onGetGyro(void* data)
   gyro.fields.y = mpu6050_data.gyro_y / 131.0f;
   gyro.fields.z = mpu6050_data.gyro_z / 131.0f;
 
-  udpServer->broadcast(gyro.bytes, sizeof(gyro.bytes));
+  udpServer->answerTo(GET_GYRO_ID, gyro.bytes, sizeof(gyro.bytes));
 }
 
 
@@ -136,7 +136,7 @@ void onGetAccel(void* data)
   accel.fields.y = mpu6050_data.accel_y / 16384.0f;
   accel.fields.z = mpu6050_data.accel_z / 16384.0f;
 
-  udpServer->broadcast(accel.bytes, sizeof(accel.bytes));
+  udpServer->answerTo(GET_ACCEL_ID, accel.bytes, sizeof(accel.bytes));
 }
 
 
@@ -147,7 +147,7 @@ void onGetAttitude(void* data)
   attitude.fields.y = attitudeFilter.getPitchDeg();
   attitude.fields.z = attitudeFilter.getYawDeg();
 
-  udpServer->broadcast(attitude.bytes, sizeof(attitude.bytes));
+  udpServer->answerTo(GET_ATTITUDE_ID, attitude.bytes, sizeof(attitude.bytes));
 }
 
 

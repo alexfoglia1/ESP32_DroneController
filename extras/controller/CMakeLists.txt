@@ -43,6 +43,11 @@ ${CMAKE_SOURCE_DIR}/src/PlotWidget.cpp
 ${CMAKE_SOURCE_DIR}/src/RollPitchDisplay.h
 ${CMAKE_SOURCE_DIR}/src/RollPitchDisplay.cpp
 
+${CMAKE_SOURCE_DIR}/src/CommandLineEdit.h
+${CMAKE_SOURCE_DIR}/src/CommandLineEdit.cpp
+${CMAKE_SOURCE_DIR}/src/SerialTerminalWidget.h
+${CMAKE_SOURCE_DIR}/src/SerialTerminalWidget.cpp
+
 ${CMAKE_SOURCE_DIR}/src/HeadingDisplay.h
 ${CMAKE_SOURCE_DIR}/src/HeadingDisplay.cpp
 

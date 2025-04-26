@@ -91,9 +91,12 @@ void UDPServer::handleMessageRx(AsyncUDPPacket packet)
 }
 
 
-void UDPServer::broadcast(uint8_t* pData, uint32_t len)
+void UDPServer::answerTo(uint8_t cmdId, uint8_t* pData, uint32_t len)
 {
-  _udp.broadcast(pData, len);
+  general_msg_t answer;
+  answer.msg_id = cmdId;
+  memcpy(answer.payload, pData, len);
+  _udp.broadcast((uint8_t*)&answer, 1 + len);
 }
 
 

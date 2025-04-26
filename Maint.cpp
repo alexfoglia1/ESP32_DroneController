@@ -129,10 +129,10 @@ void Maintenance::checkCmdStr(maint_msg_t* rxMsg)
       }
     default:
       Serial.println("[NOK] <UNKNOWN COMMAND>");
-      _rxStatus = WAIT_CMD_STR;
-      _rxBytes = 0;
+      _rxStatus = WAIT_PAYLOAD; // Mi serve perchè devo attendere il fine comando
+                                // altrimenti entro nel loop in cui accodo byte di comandi sbagliati come inizio dei successivi
+      _selectedCallback = 0xFF;
       _expectedLen = 0;
-      memset(_rxBuffer, 0x00, sizeof(_rxBuffer));
     break;
   }
 }
@@ -142,7 +142,7 @@ void Maintenance::checkPayload(maint_msg_t* rxMsg, uint8_t lastByte)
 {
   if (_rxBytes == _expectedLen || lastByte == '\0')
   {
-    if (_callbacks[_selectedCallback] != NULL)
+    if (_selectedCallback < N_MAINT_COMMANDS && _callbacks[_selectedCallback] != NULL)
     {
       Serial.print("[OK] <");
       Serial.print(_selectedCallback); Serial.print("> "); Serial.println((const char*)rxMsg->payload);   
