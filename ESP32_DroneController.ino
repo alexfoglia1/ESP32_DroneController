@@ -6,6 +6,7 @@
 #include <esp32-hal-ledc.h>
 #include <stddef.h>
 #include <string.h>
+#include <Preferences.h>
 
 #define SDA_PIN 8
 #define SCL_PIN 9
@@ -51,19 +52,20 @@ UDPServer* udpServer;
 
 char wifi_ssid[256];
 char wifi_pwd[256];
+Preferences preferences;
 
-
-// ----------------- MAINTENANCE CALLBACKS ----------------- 
-void onRxSSID(void* rxSSID)
+void tryWifiConnection(const char* ssid, const char* pwd)
 {
-  const char* ssid = (const char*) rxSSID;
-  memcpy(wifi_ssid, ssid, strlen(ssid));
-
-  if (strlen(wifi_pwd))
+  if (strlen(ssid) && strlen(pwd))
   {
-    if (udpServer->attachToWifi(wifi_ssid, wifi_pwd))
-    {
+    if (udpServer->attachToWifi(ssid, pwd))
+    {   
       Serial.print("[OK] <"); Serial.print(udpServer->localIp()); Serial.print("> Attached to WIFI ");
+            
+      preferences.begin("storage");
+      preferences.putString("ssid", ssid);
+      preferences.putString("pwd", pwd);
+      preferences.end();
 
       udpServer->listen(UDP_PORT);
     }
@@ -72,31 +74,27 @@ void onRxSSID(void* rxSSID)
       Serial.print("[NOK] Cannot connect to WIFI ");
     }
 
-    Serial.print(wifi_ssid); Serial.print(" using password "); Serial.println(wifi_pwd);
+    Serial.print(ssid); Serial.print(" using password "); Serial.println(pwd);
   }
+}
+
+
+// ----------------- MAINTENANCE CALLBACKS ----------------- 
+void onRxSSID(void* rxSSID)
+{
+  const char* ssid = (const char*) rxSSID;
+  memcpy(wifi_ssid, ssid, min(strlen(ssid), sizeof(wifi_ssid)));
+
+  tryWifiConnection((const char*) wifi_ssid, (const char*) wifi_pwd);
 }
 
 
 void onRxPWD(void* rxPWD)
 {
   const char* pwd = (const char*) rxPWD;
-  memcpy(wifi_pwd, pwd, strlen(pwd));
+  memcpy(wifi_pwd, pwd, min(strlen(pwd), sizeof(wifi_pwd)));
 
-  if (strlen(wifi_ssid))
-  {
-    if (udpServer->attachToWifi(wifi_ssid, wifi_pwd))
-    {   
-      Serial.print("[OK] <"); Serial.print(udpServer->localIp()); Serial.print("> Attached to WIFI ");
-
-      udpServer->listen(UDP_PORT);   
-    }
-    else
-    {
-      Serial.print("[NOK] Cannot connect to WIFI ");
-    }
-
-    Serial.print(wifi_ssid); Serial.print(" using password "); Serial.println(wifi_pwd);
-  }
+  tryWifiConnection((const char*) wifi_ssid, (const char*) wifi_pwd);
 }
 // ----------------- MAINTENANCE CALLBACKS ----------------- 
 
@@ -208,7 +206,23 @@ void setup()
   
   memset(wifi_ssid, 0x00, sizeof(wifi_ssid));
   memset(wifi_pwd, 0x00, sizeof(wifi_pwd));
-// -------- UDP SERVER INIT --------  
+// -------- UDP SERVER INIT --------
+
+// -------- FLASH SETTINGS INIT --------
+  preferences.begin("storage", false);
+  size_t ssid_len = preferences.getString("ssid", wifi_ssid, sizeof(wifi_ssid));
+  size_t pwd_len = preferences.getString("pwd", wifi_pwd, sizeof(wifi_pwd));
+
+  if (ssid_len == 0 || pwd_len == 0)
+  {
+    Serial.println("[INFO] Not read any valid config");
+  }
+  else
+  {
+    tryWifiConnection((const char*) wifi_ssid, (const char*) wifi_pwd);
+  }
+  preferences.end();
+// -------- FLASH SETTINGS INIT --------
 }
 
 
