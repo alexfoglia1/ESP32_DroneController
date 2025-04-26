@@ -50,10 +50,13 @@ void UDPServer::handleMessageRx(AsyncUDPPacket packet)
 
   general_msg_t* pMessage = (general_msg_t*)pData;
 
+  Serial.print("[INFO] <"); Serial.print(packet.remoteIP()); Serial.print(":"); Serial.print(packet.remotePort());
+  Serial.print("> Received msgId("); Serial.print(pMessage->msg_id); Serial.print(") len("); Serial.print(len); Serial.println(")");
+
   switch (pMessage->msg_id)
   {
     case CTRL_ID:
-      if (len == sizeof(ctrl_msg_t) && _callbacks[CTRL_ID] != NULL)
+      if (len == 1 + sizeof(ctrl_msg_t) && _callbacks[CTRL_ID] != NULL)
       {
         _callbacks[CTRL_ID]((void*)pMessage);
       }
