@@ -75,6 +75,7 @@ public:
 
     UdpComm();
     bool listen(short port);
+    void unlisten();
     void setGetEnabled(GetFlag flag, bool enabled);
     void start(const QString& addr, short port);
     void stop();
@@ -85,6 +86,9 @@ signals:
     void receivedAttitude(float roll, float pitch, float yaw);
     void receivedPid(float P, float I, float D, float U);
 
+    void uplink();
+    void downlink();
+
 private:
     
     QUdpSocket* _udpSocket;
@@ -93,6 +97,8 @@ private:
     QMutex _dataMutex;
     uint32_t _getFlag;
     QHostAddress _txAddr;
+    qint64 _txTimestamp;
+    qint64 _rxTimestamp;
     short _txPort;
 
 private slots:

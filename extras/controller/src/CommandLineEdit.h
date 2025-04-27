@@ -19,6 +19,7 @@ protected:
 private:
     QStringList _commandHistory;
     int _historyIndex;
+    bool _isCommandFromHistory;
 };
 
 #endif // COMMANDLINEEDIT_H

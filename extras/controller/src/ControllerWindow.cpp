@@ -43,6 +43,16 @@ ControllerWindow::ControllerWindow()
 	connect(&_serialComm, SIGNAL(messageReceived(const QString&)), _ui.serialTerminalWidget, SLOT(responseReceived(const QString&)));
 
 	// TODO : completare udp comm con signal/slot non lambda
+	connect(&_udpComm, &UdpComm::uplink, this, [this]()
+		{
+			_ui.lblConnStatus->setStyleSheet(("background-color: #00ff00"));
+		});
+
+	connect(&_udpComm, &UdpComm::downlink, this, [this]()
+		{
+			_ui.lblConnStatus->setStyleSheet(("background-color: #ff0000"));
+		});
+
 	connect(&_udpComm, &UdpComm::receivedAttitude, this, [this](float roll, float pitch, float yaw) {
 		checkPlot("BODY_ROLL", roll);
 		checkPlot("BODY_PITCH", pitch);
@@ -145,17 +155,31 @@ void ControllerWindow::OnBtnRescanPorts()
 
 void ControllerWindow::OnBtnConnect()
 {
-	QString addr = _ui.lineIpAddr->text();
-	short port = _ui.linePort->text().toShort();
-	_ui.linePort->setText(QString::number(port));
+	if (_ui.btnConnect->text().toUpper() == "CONNECT")
+	{
+		QString addr = _ui.lineIpAddr->text();
+		short port = _ui.linePort->text().toShort();
+		_ui.linePort->setText(QString::number(port));
 
-	_udpComm.listen(port);
-	// TODO sta cosa farla a seconda di cosa voglio, non statica all'avvio
-	_udpComm.setGetEnabled(UdpComm::GetFlag::ATTITUDE, true);
-	//_udpComm.setGetEnabled(UdpComm::GetFlag::ACCEL, true);
-	//_udpComm.setGetEnabled(UdpComm::GetFlag::GYRO, true);
+		// TODO sta cosa farla a seconda di cosa voglio, non statica all'avvio
+		_udpComm.setGetEnabled(UdpComm::GetFlag::ATTITUDE, true);
+		//_udpComm.setGetEnabled(UdpComm::GetFlag::ACCEL, true);
+		//_udpComm.setGetEnabled(UdpComm::GetFlag::GYRO, true);
 
-	_udpComm.start(addr, port);
+		_udpComm.start(addr, port);
+
+		_ui.btnConnect->setText("Disconnect");
+		_ui.lineIpAddr->setEnabled(false);
+		_ui.linePort->setEnabled(false);
+	}
+	else
+	{
+		_udpComm.stop();
+
+		_ui.btnConnect->setText("Connect");
+		_ui.lineIpAddr->setEnabled(true);
+		_ui.linePort->setEnabled(true);
+	}
 }
 
 
