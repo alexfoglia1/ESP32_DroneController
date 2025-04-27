@@ -53,6 +53,21 @@ ControllerWindow::ControllerWindow()
 		_ui.pfdHeading->UpdateHeading(yaw);
 		});
 
+	connect(&_udpComm, &UdpComm::receivedRawAccel, this, [this](float ax, float ay, float az)
+		{
+			checkPlot("RAW_ACC_X", ax);
+			checkPlot("RAW_ACC_Y", ay);
+			checkPlot("RAW_ACC_Z", az);
+		});
+
+	connect(&_udpComm, &UdpComm::receivedRawGyro, this, [this](float gx, float gy, float gz)
+		{
+			checkPlot("RAW_GYRO_X", gx);
+			checkPlot("RAW_GYRO_Y", gy);
+			checkPlot("RAW_GYRO_Z", gz);
+		});
+
+
 	QTimer* autoscanComPortsTimer = new QTimer();
 	autoscanComPortsTimer->setSingleShot(true);
 	autoscanComPortsTimer->setTimerType(Qt::PreciseTimer);
@@ -137,6 +152,9 @@ void ControllerWindow::OnBtnConnect()
 	_udpComm.listen(port);
 	// TODO sta cosa farla a seconda di cosa voglio, non statica all'avvio
 	_udpComm.setGetEnabled(UdpComm::GetFlag::ATTITUDE, true);
+	//_udpComm.setGetEnabled(UdpComm::GetFlag::ACCEL, true);
+	//_udpComm.setGetEnabled(UdpComm::GetFlag::GYRO, true);
+
 	_udpComm.start(addr, port);
 }
 

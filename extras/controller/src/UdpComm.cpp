@@ -70,23 +70,25 @@ void UdpComm::onTxTimerTimeout()
 	if (static_cast<uint32_t>(getFlag) & static_cast<uint32_t>(UdpComm::GetFlag::ACCEL))
 	{
 		qba.push_back(GET_ACCEL_ID);
+		_udpSocket->writeDatagram(qba, _txAddr, _txPort);
 	}
 	if (static_cast<uint32_t>(getFlag) & static_cast<uint32_t>(UdpComm::GetFlag::GYRO))
 	{
 		qba.push_back(GET_GYRO_ID);
+		_udpSocket->writeDatagram(qba, _txAddr, _txPort);
 	}
 	if (static_cast<uint32_t>(getFlag) & static_cast<uint32_t>(UdpComm::GetFlag::ATTITUDE))
 	{
 		qba.push_back(GET_ATTITUDE_ID);
+		_udpSocket->writeDatagram(qba, _txAddr, _txPort);
 	}
 	if (static_cast<uint32_t>(getFlag) & static_cast<uint32_t>(UdpComm::GetFlag::PID))
 	{
 		qba.push_back(GET_PID_ID);
+		_udpSocket->writeDatagram(qba, _txAddr, _txPort);
 	}
 
-	if (qba.size() == 0) return;
-
-	_udpSocket->writeDatagram(qba, _txAddr, _txPort);
+	
 }
 
 
