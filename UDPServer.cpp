@@ -50,9 +50,6 @@ void UDPServer::handleMessageRx(AsyncUDPPacket packet)
 
   general_msg_t* pMessage = (general_msg_t*)pData;
 
-  Serial.print("[INFO] <"); Serial.print(packet.remoteIP()); Serial.print(":"); Serial.print(packet.remotePort());
-  Serial.print("> Received msgId("); Serial.print(pMessage->msg_id); Serial.print(") len("); Serial.print(len); Serial.println(")");
-
   switch (pMessage->msg_id)
   {
     case CTRL_ID:
