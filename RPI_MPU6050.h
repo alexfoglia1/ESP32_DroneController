@@ -50,7 +50,7 @@ public:
     RPI_MPU6050();
 
     bool init();
-    void gyroByas(uint8_t loops = 20);
+    void gyroByas(int loops = 100);
     bool setGyroResolution(RPI_MPU6050::GyroResolution gyroResolution);
     bool setAccelResolution(RPI_MPU6050::AccelResolution accelResolution);
     void readGyro(float* gx, float* gy, float* gz);

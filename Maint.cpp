@@ -80,6 +80,10 @@ uint8_t Maintenance::toCmdId(maint_msg_t* rxMsg)
   {
     return GET_IP_CMD_ID;
   }
+  if (strncmp(rxMsg->cmd_str, GET_LOOP_T_CMD_STR, strlen(GET_LOOP_T_CMD_STR)) == 0)
+  {
+    return GET_LOOP_T_CMD_ID;
+  }
   if (strncmp(rxMsg->cmd_str, IMU_CALIB_CMD_STR, strlen(IMU_CALIB_CMD_STR)) == 0)
   {
     return IMU_CALIB_CMD_ID;
@@ -126,8 +130,14 @@ void Maintenance::checkCmdStr(maint_msg_t* rxMsg)
       Serial.println("[OK] <GET_IP>");
       _rxStatus = WAIT_PAYLOAD;
     break;
+    case GET_LOOP_T_CMD_ID:
+      _expectedLen = 1;
+      _selectedCallback = GET_LOOP_T_CMD_ID;
+      Serial.println("[OK] <GET_LOOP_T>");
+      _rxStatus = WAIT_PAYLOAD;
+    break;
     case IMU_CALIB_CMD_ID:
-      _expectedLen = 3;
+      _expectedLen = 4;
       _selectedCallback = IMU_CALIB_CMD_ID;
       Serial.println("[OK] <IMU_CALIB>");
       _rxStatus = WAIT_PAYLOAD;

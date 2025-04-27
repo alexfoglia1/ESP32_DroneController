@@ -13,7 +13,7 @@
 #define SCL_PIN 9
 #define UDP_PORT 1234
 
-#define IMU_UPDATE_MILLIS 10
+#define IMU_UPDATE_MILLIS 5
 
 #define MOTOR_1 5
 #define MOTOR_2 6
@@ -21,6 +21,8 @@
 #define MOTOR_4 21
 
 const int MOTOR_PINS[4] = {MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4};
+
+int64_t loop_time;
 
 typedef struct
 {
@@ -92,12 +94,12 @@ void imuUpdate()
                    &mpu6050_data_new.gyro_z);
 
 #define FLT(a,x,xkm1) (xkm1*a + x*(1-a))
-  mpu6050_data.accel_x = FLT(0.95f, mpu6050_data_new.accel_x, mpu6050_data.accel_x);
-  mpu6050_data.accel_y = FLT(0.95f, mpu6050_data_new.accel_y, mpu6050_data.accel_y);
-  mpu6050_data.accel_z = FLT(0.95f, mpu6050_data_new.accel_z, mpu6050_data.accel_z);
-  mpu6050_data.gyro_x = FLT(0.95f, mpu6050_data_new.gyro_x, mpu6050_data.gyro_x);
-  mpu6050_data.gyro_y = FLT(0.95f, mpu6050_data_new.gyro_y, mpu6050_data.gyro_y);
-  mpu6050_data.gyro_z = FLT(0.95f, mpu6050_data_new.gyro_z, mpu6050_data.gyro_z);
+  mpu6050_data.accel_x = FLT(0.60f, mpu6050_data_new.accel_x, mpu6050_data.accel_x);
+  mpu6050_data.accel_y = FLT(0.60f, mpu6050_data_new.accel_y, mpu6050_data.accel_y);
+  mpu6050_data.accel_z = FLT(0.60f, mpu6050_data_new.accel_z, mpu6050_data.accel_z);
+  mpu6050_data.gyro_x = FLT(0.90f, mpu6050_data_new.gyro_x, mpu6050_data.gyro_x);
+  mpu6050_data.gyro_y = FLT(0.90f, mpu6050_data_new.gyro_y, mpu6050_data.gyro_y);
+  mpu6050_data.gyro_z = FLT(0.90f, mpu6050_data_new.gyro_z, mpu6050_data.gyro_z);
 
 }
 
@@ -138,10 +140,16 @@ void onRxGetIP(void* rxGetIP)
 
 void onRxImuCalib(void* rxImuCalib)
 {
-  uint8_t loops = atoi((const char*) rxImuCalib) & 0xFF;
+  int loops = atoi((const char*) rxImuCalib);
   Serial.print("[INFO] <Calibrating IMU> loops("); Serial.print(loops); Serial.println(")");
   mpu6050.gyroByas(loops);
   Serial.println("[OK] Calibration done");
+}
+
+
+void onRxGetLoopTime(void* rxGetLoopTime)
+{
+  Serial.print("[OK] <LOOP TIME> "); Serial.print(loop_time); Serial.println(" micros");
 }
 // ----------------- MAINTENANCE CALLBACKS ----------------- 
 
@@ -243,6 +251,7 @@ void setup()
   maint->addCommandCallback(GET_PWD_CMD_ID, onRxGetPWD);
   maint->addCommandCallback(GET_SSID_CMD_ID, onRxGetSSID);
   maint->addCommandCallback(GET_IP_CMD_ID, onRxGetIP);
+  maint->addCommandCallback(GET_LOOP_T_CMD_ID, onRxGetLoopTime);
   maint->addCommandCallback(IMU_CALIB_CMD_ID, onRxImuCalib);
 // -------- MAINTENANCE INIT --------
 
@@ -293,6 +302,8 @@ void setup()
   }
   preferences.end();
 // -------- FLASH SETTINGS INIT --------
+
+  loop_time = 0;
 }
 
 
@@ -350,4 +361,5 @@ void loop()
 // ------- MAINTENANCE UPDATE -------
   maint->update();
 // ------- MAINTENANCE UPDATE -------
+  loop_time = micros() - cur_t_micros;
 }

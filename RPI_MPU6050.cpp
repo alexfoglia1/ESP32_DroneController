@@ -140,7 +140,7 @@ void RPI_MPU6050::readAccel(float* ax, float* ay, float* az)
 }
 
 
-void RPI_MPU6050::gyroByas(uint8_t loops)
+void RPI_MPU6050::gyroByas(int loops)
 {
     const int N = loops;
 
@@ -151,6 +151,7 @@ void RPI_MPU6050::gyroByas(uint8_t loops)
     float gx0 = 0.0f;
     float gy0 = 0.0f;
     float gz0 = 0.0f;
+    Serial.println("");
     for (int i = 0; i < N; i++)
     {
         float gx, gy, gz;
@@ -163,14 +164,14 @@ void RPI_MPU6050::gyroByas(uint8_t loops)
         gy0 += gy;
         gz0 += gz;
 
-        Serial.print("*");
+        Serial.printf("%4d / %4d\r ", i + 1, N);
     }
 
     _gx0 = gx0 / (float)N;
     _gy0 = gy0 / (float)N;
     _gz0 = gz0 / (float)N;
 
-    Serial.printf("[INFO] <gyro0> gx0(%f)\tgy0(%f)\tgz0(%f)", _gx0, _gy0, _gz0);
+    Serial.printf("[INFO] <gyro0> gx0(%f)\tgy0(%f)\tgz0(%f)\n", _gx0, _gy0, _gz0);
 }
 
 

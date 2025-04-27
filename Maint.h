@@ -10,19 +10,21 @@
 #define GET_SSID_CMD_ID    0x02
 #define GET_PWD_CMD_ID     0x03
 #define GET_IP_CMD_ID      0x04
+#define GET_LOOP_T_CMD_ID  0x05
 
-#define IMU_CALIB_CMD_ID   0x05
+#define IMU_CALIB_CMD_ID   0x06
 
-#define INCOMPLETE_CMD_ID  0x06
+#define INCOMPLETE_CMD_ID  0x07
 
-#define SET_SSID_CMD_STR  "SSID: "
-#define SET_PWD_CMD_STR   "PSWD: "
-#define GET_SSID_CMD_STR  "?GSSD?"
-#define GET_PWD_CMD_STR   "?GPWD?"
-#define GET_IP_CMD_STR    "?GIPA?"
-#define IMU_CALIB_CMD_STR "!IMUC!"
+#define SET_SSID_CMD_STR   "SSID: "
+#define SET_PWD_CMD_STR    "PSWD: "
+#define GET_SSID_CMD_STR   "?GSSD?"
+#define GET_PWD_CMD_STR    "?GPWD?"
+#define GET_IP_CMD_STR     "?GIPA?"
+#define GET_LOOP_T_CMD_STR "?GLPT?"
+#define IMU_CALIB_CMD_STR  "!IMUC!"
 
-#define N_MAINT_COMMANDS 6
+#define N_MAINT_COMMANDS 7
 
 
 typedef void (*maint_cmd_callback_t)(void*);
