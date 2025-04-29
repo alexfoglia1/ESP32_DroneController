@@ -47,6 +47,13 @@ private slots:
 	void OnComboTrack2TextChanged(const QString& newText);
 	void OnComboTrack3TextChanged(const QString& newText);
 	void OnComboTrack4TextChanged(const QString& newText);
+	void OnCheckGetAttitude();
+	void OnCheckGetAcc();
+	void OnCheckGetGyro();
+	void OnCheckGetRollPid();
+	void OnCheckGetPitchPid();
+	void OnCheckGetStatus();
+
 };
 
 #endif

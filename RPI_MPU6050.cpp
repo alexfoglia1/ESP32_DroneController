@@ -142,7 +142,7 @@ void RPI_MPU6050::readAccel(float* ax, float* ay, float* az)
 
 void RPI_MPU6050::gyroByas(int loops)
 {
-    const int N = loops;
+    const int N = loops <= 0 ? 1 : loops;
 
     _gx0 = 0.0f;
     _gy0 = 0.0f;

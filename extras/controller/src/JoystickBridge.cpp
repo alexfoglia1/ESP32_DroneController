@@ -68,7 +68,7 @@ void JoystickBridge::onAxisEvent(const QJoystickAxisEvent& evt)
 	qreal evtValue = saturate(evt.value, -1.0, 1.0);
 	//printf("evt.axis(%d)\n", evt.axis);
 
-	bool isValidAxisEvent = (evt.axis == 5 || evt.axis == 2 || evt.axis == 3);
+	bool isValidAxisEvent = (evt.axis == 5 || evt.axis == 0 || evt.axis == 1);
 	if (isValidAxisEvent)
 	{
 		quint8 throttle = _throttle;
@@ -77,17 +77,17 @@ void JoystickBridge::onAxisEvent(const QJoystickAxisEvent& evt)
 
 		if (evt.axis == 5)
 		{
-			if (evtValue < 0) evtValue = 0;
+			//if (evtValue < 0) evtValue = 0;
 			qreal fSignal = mapValue(evtValue, 0, 1.0, 0.0, 255.0);// deadCenterZone(-evtValue, 0.1, 1500.0, -1.0, 1.0);
-
+			//printf("evtValue(%f)\tfsignal(%f)\n", evtValue, fSignal);
 			_throttle = (quint8)(fSignal);
 		}
-		else if (evt.axis == 2)
+		else if (evt.axis == 0)
 		{
 			qreal fSignal = deadCenterZone(evtValue, 0.1, 0.0, -1.0, 1.0);
 			_roll = (float)(fSignal);
 		}
-		else if (evt.axis == 3)
+		else if (evt.axis == 1)
 		{
 			qreal fSignal = deadCenterZone(-evtValue, 0.1, 0.0, -1.0, 1.0);
 			_pitch = (float)(fSignal);

@@ -7,9 +7,11 @@
 #define GET_ACCEL_ID    0x01
 #define GET_GYRO_ID     0x02
 #define GET_ATTITUDE_ID 0x03
-#define GET_PID_ID      0x04
+#define GET_RPID_ID     0x04
+#define GET_PPID_ID     0x05
+#define GET_STATUS_ID   0x06
 
-#define MSGS_IN_SIZE    5
+#define MSGS_IN_SIZE    7
 #define MAX_PAYLOAD_SIZE 32
 
 
@@ -44,6 +46,22 @@ typedef union
   float fvec[4];
   uint8_t bytes[16];
 } PidVec;
+
+
+typedef union
+{
+    struct
+    {
+        uint8_t M1;
+        uint8_t M2;
+        uint8_t M3;
+        uint8_t M4;
+        uint8_t throttle_sp;
+        float   roll_sp;
+        float   pitch_sp;
+    }__attribute__((packed)) fields;
+    uint8_t bytes[13];
+} status_msg_t;
 
 typedef struct
 {

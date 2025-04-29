@@ -76,11 +76,26 @@ void UDPServer::handleMessageRx(AsyncUDPPacket packet)
         _callbacks[GET_ATTITUDE_ID](NULL);
       }  
       break;
-    case GET_PID_ID:
-      if (_callbacks[GET_PID_ID] != NULL)
+    case GET_RPID_ID:
+      if (_callbacks[GET_RPID_ID] != NULL)
       {
-        _callbacks[GET_PID_ID](NULL);
+        _callbacks[GET_RPID_ID](NULL);
       }      
+      break;      
+    case GET_PPID_ID:
+      if (_callbacks[GET_PPID_ID] != NULL)
+      {
+        _callbacks[GET_PPID_ID](NULL);
+      }      
+      break;
+    case GET_STATUS_ID:
+      {
+        if (_callbacks[GET_STATUS_ID] != NULL)
+        {
+          _callbacks[GET_STATUS_ID](NULL);
+        }
+        break;
+      }
       break;
     default:
       break;

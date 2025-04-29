@@ -20,9 +20,23 @@
 #define MOTOR_3 20
 #define MOTOR_4 21
 
+const float KP_ROLL = 4.0f;
+const float KI_ROLL = 0.0f;
+const float KD_ROLL = 0.0f;
+
+const float KP_PITCH = 4.0f;
+const float KI_PITCH = 0.0f;
+const float KD_PITCH = 0.0f;
+
+PidVec rollPid;
+PidVec pitchPid;
+float rollErrBefore;
+float pitchErrBefore;
+
 const int MOTOR_PINS[4] = {MOTOR_1, MOTOR_2, MOTOR_3, MOTOR_4};
 
 int64_t loop_time;
+int64_t max_loop_time;
 
 typedef struct
 {
@@ -46,7 +60,10 @@ typedef struct
   uint8_t motor_4_throttle;
 } motor_throttle_t;
 
+bool test_motors;
 uint8_t throttle_setpoint;
+float roll_setpoint;
+float pitch_setpoint;
 motor_throttle_t throttle_command;
 motor_throttle_t throttle_status;
 
@@ -108,6 +125,8 @@ void imuUpdate()
 void onRxSSID(void* rxSSID)
 {
   const char* ssid = (const char*) rxSSID;
+
+  memset(wifi_ssid, 0x00, sizeof(wifi_ssid));
   memcpy(wifi_ssid, ssid, min(strlen(ssid), sizeof(wifi_ssid)));
 
   tryWifiConnection((const char*) wifi_ssid, (const char*) wifi_pwd);
@@ -117,6 +136,8 @@ void onRxSSID(void* rxSSID)
 void onRxPWD(void* rxPWD)
 {
   const char* pwd = (const char*) rxPWD;
+
+  memset(wifi_pwd, 0x00, sizeof(wifi_pwd));
   memcpy(wifi_pwd, pwd, min(strlen(pwd), sizeof(wifi_pwd)));
 
   tryWifiConnection((const char*) wifi_ssid, (const char*) wifi_pwd);
@@ -128,15 +149,18 @@ void onRxGetPWD(void* rxGetPWD)
   Serial.print("[OK] "); Serial.println(wifi_pwd);
 }
 
+
 void onRxGetSSID(void* rxGetSSID)
 {
   Serial.print("[OK] "); Serial.println(wifi_ssid);
 }
 
+
 void onRxGetIP(void* rxGetIP)
 {
   Serial.print("[OK] "); Serial.println(udpServer->localIp());
 }
+
 
 void onRxImuCalib(void* rxImuCalib)
 {
@@ -147,9 +171,35 @@ void onRxImuCalib(void* rxImuCalib)
 }
 
 
+void onRxMotorCmdId(void* rxMotorCmd)
+{
+  char* rxMotorCmdStr = (char*) rxMotorCmd;
+  char rxMotor = rxMotorCmdStr[0];
+  char* rxPwm = (char*)(&rxMotorCmdStr[1]);
+  uint8_t motor = atoi((const char*)&rxMotor) % 5;
+  uint8_t pwm = atoi(rxPwm) & 0xFF;
+  Serial.print("[INFO] <Set motor> motor("); Serial.print(motor); Serial.print(") pwm("); Serial.print(pwm); Serial.println(")");
+
+  switch (motor)
+  {
+    case 1: test_motors = true; ledcWrite(MOTOR_1, pwm); break;
+    case 2: test_motors = true; ledcWrite(MOTOR_2, pwm); break;
+    case 3: test_motors = true; ledcWrite(MOTOR_3, pwm); break;
+    case 4: test_motors = true; ledcWrite(MOTOR_4, pwm); break;
+    default: Serial.println("[INFO} Test motors mode disabled"); test_motors = false; break;
+  }
+}
+
+
 void onRxGetLoopTime(void* rxGetLoopTime)
 {
   Serial.print("[OK] <LOOP TIME> "); Serial.print(loop_time); Serial.println(" micros");
+}
+
+
+void onRxGetMaxLoopTime(void* rxGetMaxLoopTime)
+{
+  Serial.print("[OK] <MAX LOOP TIME> "); Serial.print(max_loop_time); Serial.println(" micros");
 }
 // ----------------- MAINTENANCE CALLBACKS ----------------- 
 
@@ -188,24 +238,77 @@ void onGetAttitude(void* data)
 }
 
 
+void onGetPitchPid(void* data)
+{
+  udpServer->answerTo(GET_PPID_ID, pitchPid.bytes, sizeof(pitchPid.bytes));
+}
+
+
+void onGetRollPid(void* data)
+{
+  udpServer->answerTo(GET_RPID_ID, rollPid.bytes, sizeof(rollPid.bytes));
+}
+
+
 void onControlCommand(void* data)
 {
   general_msg_t* msgIn = (general_msg_t*) data;
   ctrl_msg_t* ctrlCmdIn = (ctrl_msg_t*) &msgIn->payload[0];
 
   throttle_setpoint = ctrlCmdIn->throttle;
+  // TODO: saturate at min angle max angle
+  roll_setpoint = ctrlCmdIn->set_point.fields.x;
+  pitch_setpoint = ctrlCmdIn->set_point.fields.y;
+}
+
+
+void onGetStatusMessage(void* data)
+{
+  status_msg_t msgOut;
+  msgOut.fields.M1 = throttle_status.motor_1_throttle;
+  msgOut.fields.M2 = throttle_status.motor_2_throttle;
+  msgOut.fields.M3 = throttle_status.motor_3_throttle;
+  msgOut.fields.M4 = throttle_status.motor_4_throttle;
+  msgOut.fields.throttle_sp = throttle_setpoint;
+  msgOut.fields.roll_sp = roll_setpoint;
+  msgOut.fields.pitch_sp = pitch_setpoint;
+
+  udpServer->answerTo(GET_STATUS_ID, msgOut.bytes, sizeof(msgOut.bytes));
 }
 // ----------------- UDP SERVER CALLBACKS ------------------ 
 
 
 // ----------------- PID CONTROLLER -----------------
-// TODO: fare un vero pid
-void pid_controller(uint8_t throttle_sp, uint8_t roll_sp, uint8_t roll, uint8_t pitch_sp, uint8_t pitch)
+void PID(PidVec& pid, float& err_before, float y, float ysp, float KP, float KI, float KD, float dt)
 {
-  throttle_command.motor_1_throttle = throttle_sp; // + pid...
-  throttle_command.motor_2_throttle = throttle_sp; // + pid...
-  throttle_command.motor_3_throttle = throttle_sp; // + pid...
-  throttle_command.motor_4_throttle = throttle_sp; // + pid...
+  float err = ysp - y;
+  float dErr = (err - err_before) / dt;
+  float iErr = (err_before + err) * dt;
+  err_before = err;
+
+  pid.fields.P = err * KP;
+  //TODO : Anti-windup
+  pid.fields.I = iErr * KI;
+  pid.fields.D = dErr * KD;
+
+  pid.fields.U = (pid.fields.P + pid.fields.I + pid.fields.D);
+}
+
+
+void pid_controller(uint8_t throttle_sp, float roll_sp, float roll, float pitch_sp, float pitch)
+{
+  PID(rollPid, rollErrBefore, roll, roll_sp, KP_ROLL, KI_ROLL, KD_ROLL, IMU_UPDATE_MILLIS / 1000.0f);
+  PID(pitchPid, pitchErrBefore, pitch, pitch_sp, KP_PITCH, KI_PITCH, KD_PITCH, IMU_UPDATE_MILLIS / 1000.0f);
+
+  float m1f = throttle_sp - pitchPid.fields.U;
+  float m2f = throttle_sp - rollPid.fields.U;
+  float m3f = throttle_sp + rollPid.fields.U;
+  float m4f = throttle_sp + pitchPid.fields.U;
+
+  throttle_command.motor_1_throttle = m1f > 255 ? 255 : m1f < 0 ? 0 : (uint8_t)(m1f);
+  throttle_command.motor_2_throttle = m2f > 255 ? 255 : m2f < 0 ? 0 : (uint8_t)(m2f);
+  throttle_command.motor_3_throttle = m3f > 255 ? 255 : m3f < 0 ? 0 : (uint8_t)(m3f);
+  throttle_command.motor_4_throttle = m4f > 255 ? 255 : m4f < 0 ? 0 : (uint8_t)(m4f);
 }
 // ----------------- PID CONTROLLER -----------------
 
@@ -239,6 +342,8 @@ void setup()
   throttle_status.motor_3_throttle  = 0;
   throttle_status.motor_4_throttle  = 0;
   throttle_setpoint = 0;
+  roll_setpoint = 0;
+  pitch_setpoint = 0;
 // -------- MOTORS INIT ----------
 
   delay(1000);
@@ -252,7 +357,9 @@ void setup()
   maint->addCommandCallback(GET_SSID_CMD_ID, onRxGetSSID);
   maint->addCommandCallback(GET_IP_CMD_ID, onRxGetIP);
   maint->addCommandCallback(GET_LOOP_T_CMD_ID, onRxGetLoopTime);
+  maint->addCommandCallback(GET_MAX_LPT_CMD_ID, onRxGetMaxLoopTime);
   maint->addCommandCallback(IMU_CALIB_CMD_ID, onRxImuCalib);
+  maint->addCommandCallback(MOTOR_CMD_ID, onRxMotorCmdId);
 // -------- MAINTENANCE INIT --------
 
 // -------- MPU6050 INIT --------
@@ -264,14 +371,29 @@ void setup()
   mpu6050_data.accel_z = 0x00;
   mpu6050_data.update_t = -1;
   
-  Wire.begin(SDA_PIN, SCL_PIN);
-  if(!mpu6050.init())
+  Wire.begin(SDA_PIN, SCL_PIN, 400000);
+  Wire.setClock(400000);
+
+  int maxRetry = 10;
+  int nRetry = 0;
+  bool mpuInit = false;
+  while(!mpuInit && nRetry < maxRetry)
   {
-    while(1){
-    Serial.println("diocane");
-    delay(100);
+    mpuInit = mpu6050.init();
+
+    if (!mpuInit)
+    {
+      Serial.println("[NOK] IMU INIT, Retry");
+      delay(100);
     }
+    else
+    {
+      Serial.println("[OK] IMU INIT");
+    }
+
+    nRetry += 1;
   };
+
   mpu6050.gyroByas();
 // -------- MPU6050 INIT --------
 
@@ -281,7 +403,10 @@ void setup()
   udpServer->addMessageCallback(GET_ACCEL_ID, onGetAccel);
   udpServer->addMessageCallback(GET_GYRO_ID,  onGetGyro);
   udpServer->addMessageCallback(GET_ATTITUDE_ID, onGetAttitude);
+  udpServer->addMessageCallback(GET_PPID_ID, onGetPitchPid);
+  udpServer->addMessageCallback(GET_RPID_ID, onGetRollPid);
   udpServer->addMessageCallback(CTRL_ID, onControlCommand);
+  udpServer->addMessageCallback(GET_STATUS_ID, onGetStatusMessage);
   
   memset(wifi_ssid, 0x00, sizeof(wifi_ssid));
   memset(wifi_pwd, 0x00, sizeof(wifi_pwd));
@@ -304,6 +429,21 @@ void setup()
 // -------- FLASH SETTINGS INIT --------
 
   loop_time = 0;
+  max_loop_time = 0;
+  test_motors = false;
+
+  rollPid.fields.P = 0;
+  rollPid.fields.I = 0;
+  rollPid.fields.D = 0;
+  rollPid.fields.U = 0;
+
+  pitchPid.fields.P = 0;
+  pitchPid.fields.I = 0;
+  pitchPid.fields.D = 0;
+  pitchPid.fields.U = 0;
+
+  rollErrBefore = 0;
+  pitchErrBefore = 0;
 }
 
 
@@ -311,29 +451,13 @@ void loop()
 {
   int64_t cur_t_micros = micros();
 // ------- MOTORS UPDATE -------
-  pid_controller(throttle_setpoint, 0, 0, 0, 0);
-
-  // TODO: lega a comando ARM/DISARM
-  //digitalWrite(N_SLEEP, throttle_setpoint > 0 ? HIGH : LOW);
-  // TODO: fare per tutti i motori
-  //int dir = throttle_command.motor_2_throttle > throttle_status.motor_2_throttle ? 1 : -1;
-  //if (dir > 0)
-  //{
-  //  for (int throttle = throttle_status.motor_2_throttle; throttle <= throttle_command.motor_2_throttle; throttle += 1)
-  //  {
-  //    ledcWrite(MOTOR_PINS[1], throttle);
-  //    delay(1);
-  //  }
-  //}
-  //else
-  //{
-  //  ledcWrite(MOTOR_PINS[1], throttle_command.motor_2_throttle);
-  //}
-
-  ledcWrite(MOTOR_1, throttle_command.motor_1_throttle);
-  ledcWrite(MOTOR_2, throttle_command.motor_2_throttle);
-  ledcWrite(MOTOR_3, throttle_command.motor_3_throttle);
-  ledcWrite(MOTOR_4, throttle_command.motor_4_throttle);
+  if (!test_motors)
+  {
+    ledcWrite(MOTOR_1, throttle_command.motor_1_throttle);
+    ledcWrite(MOTOR_2, throttle_command.motor_2_throttle);
+    ledcWrite(MOTOR_3, throttle_command.motor_3_throttle);
+    ledcWrite(MOTOR_4, throttle_command.motor_4_throttle);
+  }
 
   throttle_status.motor_1_throttle = throttle_command.motor_1_throttle;
   throttle_status.motor_2_throttle = throttle_command.motor_2_throttle;
@@ -355,11 +479,20 @@ void loop()
                           radians(mpu6050_data.gyro_y),
                           radians(mpu6050_data.gyro_z),
                           IMU_UPDATE_MILLIS / 1000.0f);
+
+    pid_controller(throttle_setpoint, roll_setpoint, attitudeFilter.getRollDeg(), pitch_setpoint, attitudeFilter.getPitchDeg());
   }
 // ------- IMU UPDATE -------
 
+// ------- LOOP TIME UPDATE -------
+  loop_time = micros() - cur_t_micros;
+  if (loop_time > max_loop_time)
+  {
+    max_loop_time = loop_time;
+  }
+// ------- LOOP TIME UPDATE -------
+
 // ------- MAINTENANCE UPDATE -------
   maint->update();
-// ------- MAINTENANCE UPDATE -------
-  loop_time = micros() - cur_t_micros;
+// ------- MAINTENANCE UPDATE -------  
 }

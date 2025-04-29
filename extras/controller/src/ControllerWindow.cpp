@@ -39,6 +39,14 @@ ControllerWindow::ControllerWindow()
 	connect(_ui.comboSelTrack3, SIGNAL(currentTextChanged(const QString&)), this, SLOT(OnComboTrack3TextChanged(const QString&)));
 	connect(_ui.comboSelTrack4, SIGNAL(currentTextChanged(const QString&)), this, SLOT(OnComboTrack4TextChanged(const QString&)));
 
+	connect(_ui.checkGetAttitude, SIGNAL(clicked()), this, SLOT(OnCheckGetAttitude()));
+	connect(_ui.checkGetAcc, SIGNAL(clicked()), this, SLOT(OnCheckGetAcc()));
+	connect(_ui.checkGetGyro, SIGNAL(clicked()), this, SLOT(OnCheckGetGyro()));
+	connect(_ui.checkGetRollPid, SIGNAL(clicked()), this, SLOT(OnCheckGetRollPid()));
+	connect(_ui.checkGetPitchPid, SIGNAL(clicked()), this, SLOT(OnCheckGetPitchPid()));
+	connect(_ui.checkGetStatus, SIGNAL(clicked()), this, SLOT(OnCheckGetStatus()));
+
+
 	connect(_ui.serialTerminalWidget, SIGNAL(commandSent(const QString&)), &_serialComm, SLOT(sendMessage(const QString&)));
 	connect(&_serialComm, SIGNAL(messageReceived(const QString&)), _ui.serialTerminalWidget, SLOT(responseReceived(const QString&)));
 
@@ -61,6 +69,10 @@ ControllerWindow::ControllerWindow()
 		_ui.pfdRollPitch->UpdateRoll(roll);
 		_ui.pfdRollPitch->UpdatePitch(pitch);
 		_ui.pfdHeading->UpdateHeading(yaw);
+
+		_ui.lineRoll->setText(QString::number(roll));
+		_ui.linePitch->setText(QString::number(pitch));
+		_ui.lineYaw->setText(QString::number(yaw));
 		});
 
 	connect(&_udpComm, &UdpComm::receivedRawAccel, this, [this](float ax, float ay, float az)
@@ -68,6 +80,10 @@ ControllerWindow::ControllerWindow()
 			checkPlot("RAW_ACC_X", ax);
 			checkPlot("RAW_ACC_Y", ay);
 			checkPlot("RAW_ACC_Z", az);
+
+			_ui.lineAccX->setText(QString::number(ax));
+			_ui.lineAccY->setText(QString::number(ay));
+			_ui.lineAccZ->setText(QString::number(az));
 		});
 
 	connect(&_udpComm, &UdpComm::receivedRawGyro, this, [this](float gx, float gy, float gz)
@@ -75,8 +91,56 @@ ControllerWindow::ControllerWindow()
 			checkPlot("RAW_GYRO_X", gx);
 			checkPlot("RAW_GYRO_Y", gy);
 			checkPlot("RAW_GYRO_Z", gz);
+
+			_ui.lineGyroX->setText(QString::number(gx));
+			_ui.lineGyroY->setText(QString::number(gy));
+			_ui.lineGyroZ->setText(QString::number(gz));
 		});
 
+	connect(&_udpComm, &UdpComm::receivedRollPid, this, [this](float P, float I, float D, float U)
+		{
+			checkPlot("ROLL_PID_P", P);
+			checkPlot("ROLL_PID_I", I);
+			checkPlot("ROLL_PID_D", D);
+			checkPlot("ROLL_PID_U", U);
+
+			_ui.lineRollPidP->setText(QString::number(P));
+			_ui.lineRollPidI->setText(QString::number(I));
+			_ui.lineRollPidD->setText(QString::number(D));
+			_ui.lineRollPidU->setText(QString::number(U));
+		});
+
+	connect(&_udpComm, &UdpComm::receivedPitchPid, this, [this](float P, float I, float D, float U)
+		{
+			checkPlot("PITCH_PID_P", P);
+			checkPlot("PITCH_PID_I", I);
+			checkPlot("PITCH_PID_D", D);
+			checkPlot("PITCH_PID_U", U);
+
+			_ui.linePitchPidP->setText(QString::number(P));
+			_ui.linePitchPidI->setText(QString::number(I));
+			_ui.linePitchPidD->setText(QString::number(D));
+			_ui.linePitchPidU->setText(QString::number(U));
+		});
+
+	connect(&_udpComm, &UdpComm::receivedStatus, this, [this](uint8_t M1, uint8_t M2, uint8_t M3, uint8_t M4, uint8_t throttle_sp, float roll_sp, float pitch_sp)
+		{
+			checkPlot("MOTOR_1", M1);
+			checkPlot("MOTOR_2", M2);
+			checkPlot("MOTOR_3", M3);
+			checkPlot("MOTOR_4", M4);
+			checkPlot("CMD_THROTTLE", throttle_sp);
+			checkPlot("CMD_ROLL", roll_sp);
+			checkPlot("CMD_PITCH", pitch_sp);
+
+			_ui.lineM1->setText(QString::number(M1));
+			_ui.lineM2->setText(QString::number(M2));
+			_ui.lineM3->setText(QString::number(M3));
+			_ui.lineM4->setText(QString::number(M4));
+			_ui.lineThrottleSp->setText(QString::number(throttle_sp));
+			_ui.lineRollSp->setText(QString::number(roll_sp));
+			_ui.linePitchSp->setText(QString::number(pitch_sp));
+		});
 
 	QTimer* autoscanComPortsTimer = new QTimer();
 	autoscanComPortsTimer->setSingleShot(true);
@@ -101,7 +165,11 @@ ControllerWindow::ControllerWindow()
 
 void ControllerWindow::OnJoystickCommand(quint8 throttle, float roll, float pitch)
 {
-	//TODO
+	_udpComm.updateCommand(throttle, roll, pitch);
+
+	_ui.lineTxThrottleSignal->setText(QString::number(throttle));
+	_ui.lineTxRollSignal->setText(QString::number(roll));
+	_ui.lineTxPitchSignal->setText(QString::number(pitch));
 }
 
 
@@ -160,11 +228,6 @@ void ControllerWindow::OnBtnConnect()
 		QString addr = _ui.lineIpAddr->text();
 		short port = _ui.linePort->text().toShort();
 		_ui.linePort->setText(QString::number(port));
-
-		// TODO sta cosa farla a seconda di cosa voglio, non statica all'avvio
-		_udpComm.setGetEnabled(UdpComm::GetFlag::ATTITUDE, true);
-		//_udpComm.setGetEnabled(UdpComm::GetFlag::ACCEL, true);
-		//_udpComm.setGetEnabled(UdpComm::GetFlag::GYRO, true);
 
 		_udpComm.start(addr, port);
 
@@ -325,4 +388,39 @@ void ControllerWindow::OnComboTrack4TextChanged(const QString& newText)
 	{
 		_ui.plot->ClearData(3);
 	}
+}
+
+
+void ControllerWindow::OnCheckGetAttitude()
+{
+	_udpComm.setGetEnabled(UdpComm::GetFlag::ATTITUDE, _ui.checkGetAttitude->isChecked());
+}
+
+
+void ControllerWindow::OnCheckGetAcc()
+{
+	_udpComm.setGetEnabled(UdpComm::GetFlag::ACCEL, _ui.checkGetAcc->isChecked());
+}
+
+
+void ControllerWindow::OnCheckGetGyro()
+{
+	_udpComm.setGetEnabled(UdpComm::GetFlag::GYRO, _ui.checkGetGyro->isChecked());
+}
+
+
+void ControllerWindow::OnCheckGetRollPid()
+{
+	_udpComm.setGetEnabled(UdpComm::GetFlag::ROLL_PID, _ui.checkGetRollPid->isChecked());
+}
+
+void ControllerWindow::OnCheckGetPitchPid()
+{
+	_udpComm.setGetEnabled(UdpComm::GetFlag::PITCH_PID, _ui.checkGetPitchPid->isChecked());
+}
+
+
+void ControllerWindow::OnCheckGetStatus()
+{
+	_udpComm.setGetEnabled(UdpComm::GetFlag::STATUS, _ui.checkGetStatus->isChecked());
 }

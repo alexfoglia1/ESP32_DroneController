@@ -13,10 +13,10 @@ PlotWidget::PlotWidget(QWidget* parent) : QLabel(parent)
 	_xSpan = 250;
 	_samplesPerSecond = 50;
 
-	_ySpan[0] = 40;
-	_ySpan[1] = 40;
-	_ySpan[2] = 40;
-	_ySpan[3] = 40;
+	_ySpan[0] = 360;
+	_ySpan[1] = 360;
+	_ySpan[2] = 360;
+	_ySpan[3] = 360;
 
 	_maxY[0] = -_ySpan[0];
 	_minY[0] = _ySpan[0];
@@ -139,8 +139,8 @@ void PlotWidget::updatePixmap(QRect rectangle, bool repaint)
 
 	int height = rectangle.height();
 	int width = rectangle.width();
-	int offsetX = width / 40;
-	int offsetY = height / 40;
+	int offsetX = width / 20;
+	int offsetY = height / 20;
 	double xScale = ((double)(width)-2.0 * offsetX) / (double)_xSpan;
 	double yScales[4] = { ((double)(height)-2.0 * offsetY) / (double)_ySpan[0],
 						((double)(height)-2.0 * offsetY) / (double)_ySpan[1],
@@ -155,21 +155,21 @@ void PlotWidget::updatePixmap(QRect rectangle, bool repaint)
 	QPainter painter(_bg);
 	_bg->fill(QColor(0x00, 0x00, 0x00));
 
-	QFont painterFont = QFont("Courier New", 6, 1, false);
+	QFont painterFont = QFont("Courier New", 9, 1, false);
 	painterFont.setBold(true);
 	painter.setFont(painterFont);
 
 	// Draw axis
 	painter.setPen(QPen(QColor(0xff, 0xff, 0xff)));
-	painter.drawLine(QPoint(offsetX, height / 2), QPoint(width - offsetX - 5, height / 2));
+	painter.drawLine(QPoint(offsetX, height / 2), QPoint(width - offsetX - 2, height / 2));
 	painter.drawLine(QPoint(offsetX, offsetY + 5), QPoint(offsetX, height - offsetY - 5));
 
 	// Draw grid
 	painter.setPen(QPen(QColor(0x55, 0x55, 0x55)));
 	for (int y = height / 2 + (height - 2 * offsetY) / 10; y <= height - offsetY; y += (height - 2 * offsetY) / 10)
 	{
-		painter.drawLine(QPoint(offsetX + 1, y), QPoint(width - offsetX - 5, y));
-		painter.drawLine(QPoint(offsetX + 1, height - y), QPoint(width - offsetX - 5, height - y));
+		painter.drawLine(QPoint(offsetX, y), QPoint(width - offsetX - 2, y));
+		painter.drawLine(QPoint(offsetX, height - y), QPoint(width - offsetX - 2, height - y));
 
 		double yValUp[4] = { (qint64(y) - qint64(offsetY)) / yScales[0],
 							   (qint64(y) - qint64(offsetY)) / yScales[1],
@@ -188,23 +188,23 @@ void PlotWidget::updatePixmap(QRect rectangle, bool repaint)
 		}
 
 		painter.setPen(QPen(_trackColors[0]));
-		painter.drawText(QPoint(offsetX + 1, y - 8), QString::number(yValDown[0]));
+		painter.drawText(QPoint(offsetX + 1, y - 12), QString::number(yValDown[0]));
 		painter.setPen(QPen(_trackColors[1]));
 		painter.drawText(QPoint(offsetX + 1, y), QString::number(yValDown[1]));
 		painter.setPen(QPen(_trackColors[2]));
-		painter.drawText(QPoint(offsetX + 1, y + 8), QString::number(yValDown[2]));
+		painter.drawText(QPoint(offsetX + 1, y + 12), QString::number(yValDown[2]));
 		painter.setPen(QPen(_trackColors[3]));
-		painter.drawText(QPoint(offsetX + 1, y + 16), QString::number(yValDown[3]));
+		painter.drawText(QPoint(offsetX + 1, y + 24), QString::number(yValDown[3]));
 		painter.setPen(QPen(QColor(0x55, 0x55, 0x55)));
 
 		painter.setPen(QPen(_trackColors[0]));
-		painter.drawText(QPoint(offsetX + 1, height - y - 8), QString::number(yValUp[0]));
+		painter.drawText(QPoint(offsetX + 1, height - y - 12), QString::number(yValUp[0]));
 		painter.setPen(QPen(_trackColors[1]));
 		painter.drawText(QPoint(offsetX + 1, height - y), QString::number(yValUp[1]));
 		painter.setPen(QPen(_trackColors[2]));
-		painter.drawText(QPoint(offsetX + 1, height - y + 8), QString::number(yValUp[2]));
+		painter.drawText(QPoint(offsetX + 1, height - y + 12), QString::number(yValUp[2]));
 		painter.setPen(QPen(_trackColors[3]));
-		painter.drawText(QPoint(offsetX + 1, height - y + 16), QString::number(yValUp[3]));
+		painter.drawText(QPoint(offsetX + 1, height - y + 24), QString::number(yValUp[3]));
 		painter.setPen(QPen(QColor(0x55, 0x55, 0x55)));
 	}
 

@@ -4,12 +4,16 @@
 
 UdpComm::UdpComm()
 {
-	_getFlag = 0;
+	_getFlag = (uint8_t)(UdpComm::GetFlag::STATUS);
 
 	_udpSocket = nullptr;
 	_txThread = nullptr;
 
 	_txTimer = nullptr;
+
+	_throttle = 0;
+	_cmdRoll = 0.0f;
+	_cmdPitch = 0.0f;
 
 	_txTimestamp = 0;
 	_rxTimestamp = 0;
@@ -107,22 +111,59 @@ void UdpComm::stop()
 }
 
 
+void UdpComm::updateCommand(uint8_t throttle, float cmdRoll, float cmdPitch)
+{
+	_dataMutex.lock();
+
+	_throttle = throttle;
+	_cmdRoll = cmdRoll;
+	_cmdPitch = cmdPitch;
+	
+	_dataMutex.unlock();
+}
+
+
+void UdpComm::txControlMessage(uint8_t throttle, float cmdRoll, float cmdPitch)
+{
+	general_msg_t cmd_gen_msg;
+	cmd_gen_msg.msg_id = CTRL_ID;
+
+	ctrl_msg_t* cmd_ctrl_msg = reinterpret_cast<ctrl_msg_t*>(&cmd_gen_msg.payload);
+	cmd_ctrl_msg->throttle = throttle;
+	cmd_ctrl_msg->set_point.fields.x = cmdRoll;
+	cmd_ctrl_msg->set_point.fields.y = cmdPitch;
+	cmd_ctrl_msg->set_point.fields.z = 0.0f;
+
+	_udpSocket->writeDatagram((const char*)&cmd_gen_msg, 1 + sizeof(ctrl_msg_t), _txAddr, _txPort);
+}
+
+
 void UdpComm::onTxTimerTimeout()
 {
 	qint64 cur_t = QDateTime::currentMSecsSinceEpoch();
 
+	uint8_t throttle;
+	float cmdRoll;
+	float cmdPitch;
+
 	uint32_t getFlag = 0;
 	_dataMutex.lock();
 	getFlag = _getFlag;
+	throttle = _throttle;
+	cmdRoll = _cmdRoll;
+	cmdPitch = _cmdPitch;
 	_dataMutex.unlock();
 
-	QByteArray qba;
+	txControlMessage(throttle, cmdRoll, cmdPitch);
+
+	// TODO : TX CTRL_ID(throttle, cmdRoll, cmdPitch);
 
 	bool tx = false;
 	if (static_cast<uint32_t>(getFlag) & static_cast<uint32_t>(UdpComm::GetFlag::ACCEL))
 	{
 		tx = true;
 
+		QByteArray qba;
 		qba.push_back(GET_ACCEL_ID);
 		_udpSocket->writeDatagram(qba, _txAddr, _txPort);
 	}
@@ -130,6 +171,7 @@ void UdpComm::onTxTimerTimeout()
 	{
 		tx = true;
 
+		QByteArray qba;
 		qba.push_back(GET_GYRO_ID);
 		_udpSocket->writeDatagram(qba, _txAddr, _txPort);
 	}
@@ -137,14 +179,32 @@ void UdpComm::onTxTimerTimeout()
 	{
 		tx = true;
 
+		QByteArray qba;
 		qba.push_back(GET_ATTITUDE_ID);
 		_udpSocket->writeDatagram(qba, _txAddr, _txPort);
 	}
-	if (static_cast<uint32_t>(getFlag) & static_cast<uint32_t>(UdpComm::GetFlag::PID))
+	if (static_cast<uint32_t>(getFlag) & static_cast<uint32_t>(UdpComm::GetFlag::ROLL_PID))
 	{
 		tx = true;
 
-		qba.push_back(GET_PID_ID);
+		QByteArray qba;
+		qba.push_back(GET_RPID_ID);
+		_udpSocket->writeDatagram(qba, _txAddr, _txPort);
+	}
+	if (static_cast<uint32_t>(getFlag) & static_cast<uint32_t>(UdpComm::GetFlag::PITCH_PID))
+	{
+		tx = true;
+
+		QByteArray qba;
+		qba.push_back(GET_PPID_ID);
+		_udpSocket->writeDatagram(qba, _txAddr, _txPort);
+	}
+	if (static_cast<uint32_t>(getFlag) & static_cast<uint32_t>(UdpComm::GetFlag::STATUS))
+	{
+		tx = true;
+
+		QByteArray qba;
+		qba.push_back(GET_STATUS_ID);
 		_udpSocket->writeDatagram(qba, _txAddr, _txPort);
 	}
 
@@ -193,10 +253,27 @@ void UdpComm::onSocketReadyRead()
 													*reinterpret_cast<float*>(&msg_in->payload[4]),
 													*reinterpret_cast<float*>(&msg_in->payload[8]));
 		break;
-		case GET_PID_ID: emit receivedPid(*reinterpret_cast<float*>(&msg_in->payload[0]),
+		case GET_RPID_ID: emit receivedRollPid(*reinterpret_cast<float*>(&msg_in->payload[0]),
 											   *reinterpret_cast<float*>(&msg_in->payload[4]),
 											   *reinterpret_cast<float*>(&msg_in->payload[8]),
 											   *reinterpret_cast<float*>(&msg_in->payload[12]));
+		break;
+		case GET_PPID_ID: emit receivedPitchPid(*reinterpret_cast<float*>(&msg_in->payload[0]),
+			*reinterpret_cast<float*>(&msg_in->payload[4]),
+			*reinterpret_cast<float*>(&msg_in->payload[8]),
+			*reinterpret_cast<float*>(&msg_in->payload[12]));
+		break;
+		case GET_STATUS_ID:
+		{
+			status_msg_t* status_msg_in = reinterpret_cast<status_msg_t*>(&msg_in->payload[0]);
+			emit receivedStatus(status_msg_in->fields.MOTOR_1,
+								status_msg_in->fields.MOTOR_2,
+								status_msg_in->fields.MOTOR_3,
+								status_msg_in->fields.MOTOR_4,
+								status_msg_in->fields.throttle_sp,
+								status_msg_in->fields.roll_sp,
+								status_msg_in->fields.pitch_sp);
+		}
 		break;
 		default:
 		break;
