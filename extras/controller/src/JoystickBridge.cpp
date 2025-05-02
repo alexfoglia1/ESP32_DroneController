@@ -84,12 +84,12 @@ void JoystickBridge::onAxisEvent(const QJoystickAxisEvent& evt)
 		}
 		else if (evt.axis == 0)
 		{
-			qreal fSignal = deadCenterZone(evtValue, 0.1, 0.0, -1.0, 1.0);
+			qreal fSignal = deadCenterZone(evtValue, 0.2, 0.0, -1.0, 1.0);
 			_roll = (float)(fSignal);
 		}
 		else if (evt.axis == 1)
 		{
-			qreal fSignal = deadCenterZone(-evtValue, 0.1, 0.0, -1.0, 1.0);
+			qreal fSignal = deadCenterZone(-evtValue, 0.2, 0.0, -1.0, 1.0);
 			_pitch = (float)(fSignal);
 		}
 
