@@ -7,8 +7,8 @@ Frame is from a brushed DC-motor toy quadcopter dismantled to remove its RF flig
 ## PCB
 Motors are controlled through four logic-level MOSFET via PWM.
 
-[Schematic](/extras/pcb/Schematic.png)
+![Schematic](/extras/pcb/Schematic.png)
 
-[PCB](/extras/pcb/PCB.png)
+![PCB](/extras/pcb/PCB.png)
 
-[3D PCB](/extras/pcb/PCB_3D.png)
+![3D PCB](/extras/pcb/PCB_3D.png)
