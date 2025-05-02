@@ -9,6 +9,6 @@ Motors are controlled through four logic-level MOSFET via PWM.
 
 ![Schematic](/extras/pcb/Schematic.png)
 
-![PCB](/extras/pcb/PCB.png)
+![PCB](/extras/pcb/PCB.svg)
 
 ![3D PCB](/extras/pcb/PCB_3D.png)
