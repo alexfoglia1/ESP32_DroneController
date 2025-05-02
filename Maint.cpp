@@ -96,7 +96,30 @@ uint8_t Maintenance::toCmdId(maint_msg_t* rxMsg)
   {
     return MOTOR_CMD_ID;
   }
-  
+  if (strncmp(rxMsg->cmd_str, ROLL_KP_CMD_STR, strlen(ROLL_KI_CMD_STR)) == 0)
+  {
+    return ROLL_KP_CMD_ID;
+  }
+  if (strncmp(rxMsg->cmd_str, ROLL_KI_CMD_STR, strlen(ROLL_KI_CMD_STR)) == 0)
+  {
+    return ROLL_KI_CMD_ID;
+  }
+  if (strncmp(rxMsg->cmd_str, ROLL_KD_CMD_STR, strlen(ROLL_KD_CMD_STR)) == 0)
+  {
+    return ROLL_KD_CMD_ID;
+  }
+  if (strncmp(rxMsg->cmd_str, PITCH_KP_CMD_STR, strlen(PITCH_KI_CMD_STR)) == 0)
+  {
+    return PITCH_KP_CMD_ID;
+  }
+  if (strncmp(rxMsg->cmd_str, PITCH_KI_CMD_STR, strlen(PITCH_KI_CMD_STR)) == 0)
+  {
+    return PITCH_KI_CMD_ID;
+  }
+  if (strncmp(rxMsg->cmd_str, PITCH_KD_CMD_STR, strlen(PITCH_KD_CMD_STR)) == 0)
+  {
+    return PITCH_KD_CMD_ID;
+  }  
   return INCOMPLETE_CMD_ID;
 }
 
@@ -162,6 +185,42 @@ void Maintenance::checkCmdStr(maint_msg_t* rxMsg)
       Serial.println("[OK] <MOTOR_CMD>");
       _rxStatus = WAIT_PAYLOAD;   
     break;
+    case ROLL_KP_CMD_ID:
+      _expectedLen = MAX_PAYLOAD_SIZE_MAINT;
+      _selectedCallback = ROLL_KP_CMD_ID;
+      Serial.println("[OK] <ROLL KP>");
+      _rxStatus = WAIT_PAYLOAD;
+    break;
+    case ROLL_KI_CMD_ID:
+      _expectedLen = MAX_PAYLOAD_SIZE_MAINT;
+      _selectedCallback = ROLL_KI_CMD_ID;
+      Serial.println("[OK] <ROLL KI>");
+      _rxStatus = WAIT_PAYLOAD;
+    break;
+    case ROLL_KD_CMD_ID:
+      _expectedLen = MAX_PAYLOAD_SIZE_MAINT;
+      _selectedCallback = ROLL_KD_CMD_ID;
+      Serial.println("[OK] <ROLL KD>");
+      _rxStatus = WAIT_PAYLOAD;
+    break;
+    case PITCH_KP_CMD_ID:
+      _expectedLen = MAX_PAYLOAD_SIZE_MAINT;
+      _selectedCallback = PITCH_KP_CMD_ID;
+      Serial.println("[OK] <PITCH KP>");
+      _rxStatus = WAIT_PAYLOAD;
+    break;
+    case PITCH_KI_CMD_ID:
+      _expectedLen = MAX_PAYLOAD_SIZE_MAINT;
+      _selectedCallback = PITCH_KI_CMD_ID;
+      Serial.println("[OK] <PITCH KI>");
+      _rxStatus = WAIT_PAYLOAD;
+    break;
+    case PITCH_KD_CMD_ID:
+      _expectedLen = MAX_PAYLOAD_SIZE_MAINT;
+      _selectedCallback = PITCH_KD_CMD_ID;
+      Serial.println("[OK] <PITCH KD>");
+      _rxStatus = WAIT_PAYLOAD;
+    break;            
     case INCOMPLETE_CMD_ID:
       if (_rxBytes < sizeof(rxMsg->cmd_str))
       {

@@ -3,15 +3,19 @@
 
 #include <stdint.h>
 
-#define CTRL_ID         0x00
-#define GET_ACCEL_ID    0x01
-#define GET_GYRO_ID     0x02
-#define GET_ATTITUDE_ID 0x03
-#define GET_RPID_ID     0x04
-#define GET_PPID_ID     0x05
-#define GET_STATUS_ID   0x06
+#define CTRL_ID          0x00
+#define GET_ACCEL_ID     0x01
+#define GET_GYRO_ID      0x02
+#define GET_ATTITUDE_ID  0x03
+#define GET_RPID_ID      0x04
+#define GET_PPID_ID      0x05
+#define GET_STATUS_ID    0x06
+#define TEST_MOTORS_ID   0x07
+#define ARM_MOTORS_ID    0x08
+#define SET_ROLL_PID_ID  0x09
+#define SET_PITCH_PID_ID 0x0A
 
-#define MSGS_IN_SIZE    7
+#define MSGS_IN_SIZE    11
 #define MAX_PAYLOAD_SIZE 32
 
 
@@ -47,6 +51,17 @@ typedef union
   uint8_t bytes[16];
 } PidVec;
 
+typedef union
+{
+  struct
+  {
+    float Kp;
+    float Ki;
+    float Kd;
+  } __attribute__((packed)) fields;
+  float fvec[3];
+  uint8_t bytes[12];
+} PidParamsVec;
 
 typedef union
 {
@@ -62,6 +77,17 @@ typedef union
     }__attribute__((packed)) fields;
     uint8_t bytes[13];
 } status_msg_t;
+
+typedef union
+{
+    struct
+    {
+        uint8_t  motors_flag;
+        uint8_t  throttle;
+    }__attribute__((packed)) fields;
+    uint8_t bytes[2];
+} test_motors_msg_t;
+
 
 typedef struct
 {

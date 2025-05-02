@@ -337,9 +337,9 @@
     <property name="geometry">
      <rect>
       <x>540</x>
-      <y>70</y>
+      <y>60</y>
       <width>341</width>
-      <height>81</height>
+      <height>101</height>
      </rect>
     </property>
     <property name="title">
@@ -407,6 +407,54 @@
        </widget>
       </item>
      </layout>
+    </widget>
+    <widget class="QCheckBox" name="checkJoySynchAttitude">
+     <property name="geometry">
+      <rect>
+       <x>230</x>
+       <y>70</y>
+       <width>101</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Attitude Sync</string>
+     </property>
+     <property name="checked">
+      <bool>false</bool>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btnResetAttitudeSync">
+     <property name="geometry">
+      <rect>
+       <x>140</x>
+       <y>70</y>
+       <width>75</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Reset</string>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="checkIsJoyArmed">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>70</y>
+       <width>101</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Armed</string>
+     </property>
+     <property name="checked">
+      <bool>false</bool>
+     </property>
     </widget>
    </widget>
    <widget class="QComboBox" name="comboSelTrack3">
@@ -1397,9 +1445,9 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>630</y>
+      <y>640</y>
       <width>871</width>
-      <height>281</height>
+      <height>271</height>
      </rect>
     </property>
     <property name="title">
@@ -1409,9 +1457,9 @@
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>30</y>
+       <y>40</y>
        <width>831</width>
-       <height>231</height>
+       <height>221</height>
       </rect>
      </property>
     </widget>
@@ -1439,7 +1487,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>192.168.1.9</string>
+     <string>192.168.1.12</string>
     </property>
    </widget>
    <widget class="QPushButton" name="btnConnect">
@@ -1501,9 +1549,9 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>70</y>
+      <y>60</y>
       <width>511</width>
-      <height>81</height>
+      <height>101</height>
      </rect>
     </property>
     <property name="title">
@@ -1573,7 +1621,7 @@
       <x>20</x>
       <y>170</y>
       <width>511</width>
-      <height>441</height>
+      <height>451</height>
      </rect>
     </property>
     <property name="title">
@@ -2003,8 +2051,8 @@
    <widget class="RollPitchDisplay" name="pfdRollPitch" native="true">
     <property name="geometry">
      <rect>
-      <x>610</x>
-      <y>200</y>
+      <x>560</x>
+      <y>240</y>
       <width>180</width>
       <height>180</height>
      </rect>
@@ -2013,12 +2061,311 @@
    <widget class="HeadingDisplay" name="pfdHeading" native="true">
     <property name="geometry">
      <rect>
-      <x>610</x>
-      <y>400</y>
+      <x>560</x>
+      <y>440</y>
       <width>180</width>
       <height>180</height>
      </rect>
     </property>
+   </widget>
+   <widget class="QGroupBox" name="groupBox_6">
+    <property name="geometry">
+     <rect>
+      <x>540</x>
+      <y>170</y>
+      <width>341</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Test Motors</string>
+    </property>
+    <widget class="QCheckBox" name="checkTestM1">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>20</y>
+       <width>41</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>M1</string>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="checkTestM2">
+     <property name="geometry">
+      <rect>
+       <x>60</x>
+       <y>20</y>
+       <width>41</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>M2</string>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="checkTestM4">
+     <property name="geometry">
+      <rect>
+       <x>160</x>
+       <y>20</y>
+       <width>41</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>M4</string>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="checkTestM3">
+     <property name="geometry">
+      <rect>
+       <x>110</x>
+       <y>20</y>
+       <width>41</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>M3</string>
+     </property>
+    </widget>
+    <widget class="QSpinBox" name="spinTestMotorsPwm">
+     <property name="geometry">
+      <rect>
+       <x>200</x>
+       <y>20</y>
+       <width>51</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="maximum">
+      <number>255</number>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btnSendTestMotors">
+     <property name="geometry">
+      <rect>
+       <x>260</x>
+       <y>20</y>
+       <width>75</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Send</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QGroupBox" name="groupBox">
+    <property name="geometry">
+     <rect>
+      <x>760</x>
+      <y>230</y>
+      <width>121</width>
+      <height>191</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>ROLL PID</string>
+    </property>
+    <widget class="QPushButton" name="btnSendRollPid">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>160</y>
+       <width>81</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Send</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_31">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>30</y>
+       <width>31</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>KP</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_32">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>80</y>
+       <width>31</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>KI</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_34">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>130</y>
+       <width>31</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>KD</string>
+     </property>
+    </widget>
+    <widget class="QDoubleSpinBox" name="spinRollKp">
+     <property name="geometry">
+      <rect>
+       <x>50</x>
+       <y>30</y>
+       <width>62</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="singleStep">
+      <double>0.100000000000000</double>
+     </property>
+    </widget>
+    <widget class="QDoubleSpinBox" name="spinRollKi">
+     <property name="geometry">
+      <rect>
+       <x>50</x>
+       <y>80</y>
+       <width>62</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="singleStep">
+      <double>0.100000000000000</double>
+     </property>
+    </widget>
+    <widget class="QDoubleSpinBox" name="spinRollKd">
+     <property name="geometry">
+      <rect>
+       <x>50</x>
+       <y>130</y>
+       <width>62</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="singleStep">
+      <double>0.100000000000000</double>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QGroupBox" name="groupBox_7">
+    <property name="geometry">
+     <rect>
+      <x>760</x>
+      <y>430</y>
+      <width>121</width>
+      <height>191</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>PITCH PID</string>
+    </property>
+    <widget class="QPushButton" name="btnSendPitchPid">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>160</y>
+       <width>81</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Send</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_35">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>30</y>
+       <width>31</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>KP</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_36">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>80</y>
+       <width>31</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>KI</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_37">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>130</y>
+       <width>31</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>KD</string>
+     </property>
+    </widget>
+    <widget class="QDoubleSpinBox" name="spinPitchKp">
+     <property name="geometry">
+      <rect>
+       <x>50</x>
+       <y>30</y>
+       <width>62</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="singleStep">
+      <double>0.100000000000000</double>
+     </property>
+    </widget>
+    <widget class="QDoubleSpinBox" name="spinPitchKi">
+     <property name="geometry">
+      <rect>
+       <x>50</x>
+       <y>80</y>
+       <width>62</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="singleStep">
+      <double>0.100000000000000</double>
+     </property>
+    </widget>
+    <widget class="QDoubleSpinBox" name="spinPitchKd">
+     <property name="geometry">
+      <rect>
+       <x>50</x>
+       <y>130</y>
+       <width>62</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="singleStep">
+      <double>0.100000000000000</double>
+     </property>
+    </widget>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">

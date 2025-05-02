@@ -11,10 +11,12 @@ public:
 
 signals:
 	void joystickCommand(quint8 throttle, float roll, float pitch);
+	void armedCommand(bool isArmed);
 
 private:
 	QJoysticks* _js;
 	
+	bool _armed;
 	quint8 _throttle;
 	float _roll;
 	float _pitch;
@@ -26,6 +28,7 @@ private:
 
 private slots:
 	void onAxisEvent(const QJoystickAxisEvent& evt);
+	void onButtonEvent(const QJoystickButtonEvent& evt);
 };
 
 #endif

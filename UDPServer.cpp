@@ -89,14 +89,35 @@ void UDPServer::handleMessageRx(AsyncUDPPacket packet)
       }      
       break;
     case GET_STATUS_ID:
+      if (_callbacks[GET_STATUS_ID] != NULL)
       {
-        if (_callbacks[GET_STATUS_ID] != NULL)
-        {
-          _callbacks[GET_STATUS_ID](NULL);
-        }
-        break;
+        _callbacks[GET_STATUS_ID](NULL);
       }
       break;
+    case TEST_MOTORS_ID:
+      if (len == 1 + sizeof(test_motors_msg_t) && _callbacks[TEST_MOTORS_ID] != NULL)
+      {
+        _callbacks[TEST_MOTORS_ID]((void*)pMessage);
+      }
+      break;
+    case ARM_MOTORS_ID:
+      if (len == 1 + sizeof(bool) && _callbacks[ARM_MOTORS_ID] != NULL)
+      {
+        _callbacks[ARM_MOTORS_ID]((void*)pMessage);
+      }
+      break;
+    case SET_ROLL_PID_ID:
+      if (len == 1 + sizeof(PidParamsVec) && _callbacks[SET_ROLL_PID_ID])
+      {
+        _callbacks[SET_ROLL_PID_ID]((void*)pMessage);
+      }
+      break;
+    case SET_PITCH_PID_ID:
+      if (len == 1 + sizeof(PidParamsVec) && _callbacks[SET_PITCH_PID_ID])
+      {
+        _callbacks[SET_PITCH_PID_ID]((void*)pMessage);
+      }
+      break;        
     default:
       break;
   }

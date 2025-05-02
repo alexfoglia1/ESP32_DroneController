@@ -16,7 +16,14 @@
 #define IMU_CALIB_CMD_ID   0x07
 #define MOTOR_CMD_ID       0x08
 
-#define INCOMPLETE_CMD_ID  0x09
+#define ROLL_KP_CMD_ID     0x09
+#define ROLL_KI_CMD_ID     0x0A
+#define ROLL_KD_CMD_ID     0x0B
+#define PITCH_KP_CMD_ID    0x0C
+#define PITCH_KI_CMD_ID    0x0D
+#define PITCH_KD_CMD_ID    0x0E
+
+#define INCOMPLETE_CMD_ID  0x0F
 
 #define SET_SSID_CMD_STR    "SSID: "
 #define SET_PWD_CMD_STR     "PSWD: "
@@ -26,8 +33,15 @@
 #define GET_LOOP_T_CMD_STR  "?GLPT?"
 #define GET_MAX_LPT_CMD_STR "?GMLT?"
 
+
 #define IMU_CALIB_CMD_STR   "!IMUC!"
 #define MOTOR_CMD_STR       "!MSET!"
+#define ROLL_KP_CMD_STR     "!ROKP!"
+#define ROLL_KI_CMD_STR     "!ROKI!"
+#define ROLL_KD_CMD_STR     "!ROKD!"
+#define PITCH_KP_CMD_STR    "!PIKP!"
+#define PITCH_KI_CMD_STR    "!PIKI!"
+#define PITCH_KD_CMD_STR    "!PIKD!"
 
 
 #define N_MAINT_COMMANDS INCOMPLETE_CMD_ID

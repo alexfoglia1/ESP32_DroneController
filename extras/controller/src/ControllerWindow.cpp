@@ -23,10 +23,15 @@ ControllerWindow::ControllerWindow()
 	_ui.comboSelBaud->setCurrentIndex(7); // Default 115200
 
 	connect(&_js, SIGNAL(joystickCommand(quint8, float, float)), this, SLOT(OnJoystickCommand(quint8, float, float)));
+	connect(&_js, SIGNAL(armedCommand(bool)), this, SLOT(OnArmedCommand(bool)));
 
 	connect(_ui.btnOpenSerialPort, SIGNAL(clicked()), this, SLOT(OnBtnOpenSerialPort()));
 	connect(_ui.btnRescanPorts, SIGNAL(clicked()), this, SLOT(OnBtnRescanPorts()));
 	connect(_ui.btnConnect, SIGNAL(clicked()), this, SLOT(OnBtnConnect()));
+	connect(_ui.btnResetAttitudeSync, SIGNAL(clicked()), this, SLOT(OnBtnResetJoySynch()));
+	connect(_ui.btnSendTestMotors, SIGNAL(clicked()), this, SLOT(OnBtnTestMotors()));
+	connect(_ui.btnSendRollPid, SIGNAL(clicked()), this, SLOT(OnBtnSendRollPid()));
+	connect(_ui.btnSendPitchPid, SIGNAL(clicked()), this, SLOT(OnBtnSendPitchPid()));
 
 	connect(_ui.plotTimeSlider, SIGNAL(valueChanged(int)), this, SLOT(OnPlotSliderValueChanged(int)));
 	connect(_ui.plotTrack1Slider, SIGNAL(valueChanged(int)), this, SLOT(OnPlotTrack1ValueChanged(int)));
@@ -46,6 +51,7 @@ ControllerWindow::ControllerWindow()
 	connect(_ui.checkGetPitchPid, SIGNAL(clicked()), this, SLOT(OnCheckGetPitchPid()));
 	connect(_ui.checkGetStatus, SIGNAL(clicked()), this, SLOT(OnCheckGetStatus()));
 
+	connect(_ui.checkJoySynchAttitude, SIGNAL(clicked()), this, SLOT(OnCheckJoySynchAttitude()));
 
 	connect(_ui.serialTerminalWidget, SIGNAL(commandSent(const QString&)), &_serialComm, SLOT(sendMessage(const QString&)));
 	connect(&_serialComm, SIGNAL(messageReceived(const QString&)), _ui.serialTerminalWidget, SLOT(responseReceived(const QString&)));
@@ -62,6 +68,17 @@ ControllerWindow::ControllerWindow()
 		});
 
 	connect(&_udpComm, &UdpComm::receivedAttitude, this, [this](float roll, float pitch, float yaw) {
+
+		if (_synchOnNextAttitude)
+		{
+			_lastRoll = roll;
+			_lastPitch = pitch;
+
+			_synchOnNextAttitude = false;
+			_attitudeSynch = true;
+			_ui.checkJoySynchAttitude->setChecked(false);
+		}
+
 		checkPlot("BODY_ROLL", roll);
 		checkPlot("BODY_PITCH", pitch);
 		checkPlot("BODY_YAW", yaw);
@@ -142,6 +159,12 @@ ControllerWindow::ControllerWindow()
 			_ui.linePitchSp->setText(QString::number(pitch_sp));
 		});
 
+	_lastRoll = 0.0f;
+	_lastPitch = 0.0f;
+	_lastThrottle = 0;
+	_synchOnNextAttitude = false;
+	_attitudeSynch = false;
+
 	QTimer* autoscanComPortsTimer = new QTimer();
 	autoscanComPortsTimer->setSingleShot(true);
 	autoscanComPortsTimer->setTimerType(Qt::PreciseTimer);
@@ -165,11 +188,26 @@ ControllerWindow::ControllerWindow()
 
 void ControllerWindow::OnJoystickCommand(quint8 throttle, float roll, float pitch)
 {
+	if (_attitudeSynch)
+	{
+		roll = _lastRoll;
+		pitch = _lastPitch;
+	}
+
+	_lastThrottle = throttle;
+
 	_udpComm.updateCommand(throttle, roll, pitch);
 
 	_ui.lineTxThrottleSignal->setText(QString::number(throttle));
 	_ui.lineTxRollSignal->setText(QString::number(roll));
 	_ui.lineTxPitchSignal->setText(QString::number(pitch));
+}
+
+
+void ControllerWindow::OnArmedCommand(bool isArmed)
+{
+	_udpComm.sendArmedCommand(isArmed);
+	_ui.checkIsJoyArmed->setChecked(isArmed);
 }
 
 
@@ -423,4 +461,61 @@ void ControllerWindow::OnCheckGetPitchPid()
 void ControllerWindow::OnCheckGetStatus()
 {
 	_udpComm.setGetEnabled(UdpComm::GetFlag::STATUS, _ui.checkGetStatus->isChecked());
+}
+
+
+void ControllerWindow::OnCheckJoySynchAttitude()
+{
+	_synchOnNextAttitude = _ui.checkJoySynchAttitude->isChecked();
+}
+
+
+void ControllerWindow::OnBtnResetJoySynch()
+{
+	_attitudeSynch = false;
+}
+
+
+void ControllerWindow::OnBtnTestMotors()
+{
+	uint8_t motors = 0;
+
+	if (_ui.checkTestM1->isChecked())
+	{
+		motors |= static_cast<uint8_t>(UdpComm::MotorFlag::MOTOR_1);
+	}
+	if (_ui.checkTestM2->isChecked())
+	{
+		motors |= static_cast<uint8_t>(UdpComm::MotorFlag::MOTOR_2);
+	}
+	if (_ui.checkTestM3->isChecked())
+	{
+		motors |= static_cast<uint8_t>(UdpComm::MotorFlag::MOTOR_3);
+	}
+	if (_ui.checkTestM4->isChecked())
+	{
+		motors |= static_cast<uint8_t>(UdpComm::MotorFlag::MOTOR_4);
+	}
+
+	_udpComm.testMotors(static_cast<UdpComm::MotorFlag>(motors), static_cast<uint8_t>(_ui.spinTestMotorsPwm->value() & 0xFF));
+}
+
+
+void ControllerWindow::OnBtnSendRollPid()
+{
+	float kp = static_cast<float>(_ui.spinRollKp->value());
+	float ki = static_cast<float>(_ui.spinRollKi->value());
+	float kd = static_cast<float>(_ui.spinRollKd->value());
+
+	_udpComm.setRollPid(kp, ki, kd);
+}
+
+
+void ControllerWindow::OnBtnSendPitchPid()
+{
+	float kp = static_cast<float>(_ui.spinPitchKp->value());
+	float ki = static_cast<float>(_ui.spinPitchKi->value());
+	float kd = static_cast<float>(_ui.spinPitchKd->value());
+
+	_udpComm.setPitchPid(kp, ki, kd);
 }

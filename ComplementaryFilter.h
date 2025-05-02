@@ -6,7 +6,7 @@
 class ComplementaryFilter
 {
 public:
-    ComplementaryFilter(float alpha = 0.9f);
+    ComplementaryFilter(float alpha = 0.75f);
 
     void update(float ax, float ay, float az, float gx, float gy, float gz, float dt);
 

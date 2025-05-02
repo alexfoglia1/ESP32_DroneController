@@ -17,6 +17,8 @@ UdpComm::UdpComm()
 
 	_txTimestamp = 0;
 	_rxTimestamp = 0;
+
+	_connected = false;
 }
 
 
@@ -41,6 +43,8 @@ void UdpComm::unlisten()
 		_udpSocket->close();
 		_udpSocket->deleteLater();
 		_udpSocket = nullptr;
+
+		_connected = false;
 	}
 }
 
@@ -86,6 +90,8 @@ void UdpComm::start(const QString& address, short port)
 	connect(_txTimer, SIGNAL(timeout()), this, SLOT(onTxTimerTimeout()));
 	connect(_txThread, SIGNAL(started()), _txTimer, SLOT(start()));
 
+	_connected = true;
+
 	_txThread->start();
 }
 
@@ -123,6 +129,83 @@ void UdpComm::updateCommand(uint8_t throttle, float cmdRoll, float cmdPitch)
 }
 
 
+void UdpComm::sendArmedCommand(bool isArmed)
+{
+	if (!_connected) return;
+
+	_dataMutex.lock();
+
+	general_msg_t armed_cmd;
+	armed_cmd.msg_id = ARM_MOTORS_ID;
+	armed_cmd.payload[0] = isArmed ? 1 : 0;
+
+	_udpSocket->writeDatagram((const char*)&armed_cmd, 2, _txAddr, _txPort);
+
+	_dataMutex.unlock();
+}
+
+
+void UdpComm::testMotors(UdpComm::MotorFlag motors_flags, uint8_t pwm)
+{
+	if (!_connected) return;
+
+	_dataMutex.lock();
+
+	general_msg_t test_motors_gen_msg;
+	test_motors_gen_msg.msg_id = TEST_MOTORS_ID;
+	
+	test_motors_msg_t* test_motors_msg = reinterpret_cast<test_motors_msg_t*>(&test_motors_gen_msg.payload);
+	test_motors_msg->fields.motors_flag = static_cast<uint8_t>(motors_flags);
+	test_motors_msg->fields.throttle = pwm;
+
+	_udpSocket->writeDatagram((const char*)&test_motors_gen_msg, 1 + sizeof(test_motors_msg_t), _txAddr, _txPort);
+
+	_dataMutex.unlock();
+}
+
+
+void UdpComm::setRollPid(float kp, float ki, float kd)
+{
+	if (!_connected) return;
+
+	_dataMutex.lock();
+
+	general_msg_t roll_pid_gen_msg;
+	roll_pid_gen_msg.msg_id = SET_ROLL_PID_ID;
+
+	PidParamsVec* pid_params_vec = reinterpret_cast<PidParamsVec*>(&roll_pid_gen_msg.payload);
+	
+	pid_params_vec->fields.Kp = kp;
+	pid_params_vec->fields.Ki = ki;
+	pid_params_vec->fields.Kd = kd;
+
+	_udpSocket->writeDatagram((const char*)&roll_pid_gen_msg, 1 + sizeof(PidParamsVec), _txAddr, _txPort);
+
+	_dataMutex.unlock();
+}
+
+
+void UdpComm::setPitchPid(float kp, float ki, float kd)
+{
+	if (!_connected) return;
+
+	_dataMutex.lock();
+
+	general_msg_t pitch_pid_gen_msg;
+	pitch_pid_gen_msg.msg_id = SET_PITCH_PID_ID;
+
+	PidParamsVec* pid_params_vec = reinterpret_cast<PidParamsVec*>(&pitch_pid_gen_msg.payload);
+
+	pid_params_vec->fields.Kp = kp;
+	pid_params_vec->fields.Ki = ki;
+	pid_params_vec->fields.Kd = kd;
+
+	_udpSocket->writeDatagram((const char*)&pitch_pid_gen_msg, 1 + sizeof(PidParamsVec), _txAddr, _txPort);
+
+	_dataMutex.unlock();
+}
+
+
 void UdpComm::txControlMessage(uint8_t throttle, float cmdRoll, float cmdPitch)
 {
 	general_msg_t cmd_gen_msg;
@@ -155,8 +238,6 @@ void UdpComm::onTxTimerTimeout()
 	_dataMutex.unlock();
 
 	txControlMessage(throttle, cmdRoll, cmdPitch);
-
-	// TODO : TX CTRL_ID(throttle, cmdRoll, cmdPitch);
 
 	bool tx = false;
 	if (static_cast<uint32_t>(getFlag) & static_cast<uint32_t>(UdpComm::GetFlag::ACCEL))

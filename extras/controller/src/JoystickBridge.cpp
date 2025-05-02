@@ -12,7 +12,10 @@ JoystickBridge::JoystickBridge(QObject* parent) : QObject(parent)
 	_roll = 0.0;
 	_pitch = 0.0;
 
+	_armed = false;
+
 	connect(_js, &QJoysticks::axisEvent, this, &JoystickBridge::onAxisEvent);
+	connect(_js, &QJoysticks::buttonEvent, this, &JoystickBridge::onButtonEvent);
 }
 
 
@@ -99,5 +102,16 @@ void JoystickBridge::onAxisEvent(const QJoystickAxisEvent& evt)
 			emit joystickCommand(_throttle, _roll, _pitch);
 		}
 
+	}
+}
+
+
+
+void JoystickBridge::onButtonEvent(const QJoystickButtonEvent& evt)
+{
+	if (evt.button == 0 && evt.pressed)
+	{
+		_armed = !_armed;
+		emit armedCommand(_armed);
 	}
 }

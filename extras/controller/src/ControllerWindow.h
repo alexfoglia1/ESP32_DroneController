@@ -25,6 +25,11 @@ private:
 	JoystickBridge _js;
 	SerialComm _serialComm;
 	UdpComm _udpComm;
+	float _lastRoll;
+	float _lastPitch;
+	bool _synchOnNextAttitude;
+	bool _attitudeSynch;
+	quint8 _lastThrottle;
 
 	const int _txDelayMillis = 100;
 	
@@ -33,6 +38,7 @@ private:
 
 private slots:
 	void OnJoystickCommand(quint8 throttle, float roll, float pitch);
+	void OnArmedCommand(bool isArmed);
 
 	void OnBtnOpenSerialPort();
 	void OnBtnRescanPorts();
@@ -53,6 +59,11 @@ private slots:
 	void OnCheckGetRollPid();
 	void OnCheckGetPitchPid();
 	void OnCheckGetStatus();
+	void OnCheckJoySynchAttitude();
+	void OnBtnResetJoySynch();
+	void OnBtnTestMotors();
+	void OnBtnSendRollPid();
+	void OnBtnSendPitchPid();
 
 };
 
