@@ -26,6 +26,7 @@ bool RPI_MPU6050::init()
     {
       uint8_t zero = 0x00;
       uint8_t one  = 0x01;
+      uint8_t three = 0x03;
 
       int writeRes = i2cWrite(RPI_MPU6050::Register::SMPLRT_DIV, &zero, 1);
       if (writeRes != 0)
@@ -51,7 +52,7 @@ bool RPI_MPU6050::init()
       }
             
       /** Write to Configuration register **/
-      writeRes = i2cWrite(RPI_MPU6050::Register::CONFIG, &zero, 1);
+      writeRes = i2cWrite(RPI_MPU6050::Register::CONFIG, &three, 1);
       if (writeRes != 0)
       {
           Serial.println("[NOK] <IMU Init> Configuration register");

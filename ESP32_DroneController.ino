@@ -15,16 +15,22 @@
 
 #define IMU_UPDATE_MILLIS 5
 
-#define MOTOR_1 5
-#define MOTOR_2 6
-#define MOTOR_3 20
-#define MOTOR_4 21
+/** Remapped to have M1 M2
+                       X
+                     M4 M3
+**/
+#define MOTOR_1 21
+#define MOTOR_2 5
+#define MOTOR_3 6
+#define MOTOR_4 20
 
-const float KP_ROLL = 4.0f;
+#define IMU_PWR 10
+
+const float KP_ROLL = 1.0f;
 const float KI_ROLL = 0.0f;
 const float KD_ROLL = 0.0f;
 
-const float KP_PITCH = 4.0f;
+const float KP_PITCH = 1.0f;
 const float KI_PITCH = 0.0f;
 const float KD_PITCH = 0.0f;
 
@@ -114,9 +120,9 @@ void imuUpdate()
   mpu6050_data.accel_x = FLT(0.60f, mpu6050_data_new.accel_x, mpu6050_data.accel_x);
   mpu6050_data.accel_y = FLT(0.60f, mpu6050_data_new.accel_y, mpu6050_data.accel_y);
   mpu6050_data.accel_z = FLT(0.60f, mpu6050_data_new.accel_z, mpu6050_data.accel_z);
-  mpu6050_data.gyro_x = FLT(0.90f, mpu6050_data_new.gyro_x, mpu6050_data.gyro_x);
-  mpu6050_data.gyro_y = FLT(0.90f, mpu6050_data_new.gyro_y, mpu6050_data.gyro_y);
-  mpu6050_data.gyro_z = FLT(0.90f, mpu6050_data_new.gyro_z, mpu6050_data.gyro_z);
+  mpu6050_data.gyro_x = FLT(0.98f, mpu6050_data_new.gyro_x, mpu6050_data.gyro_x);
+  mpu6050_data.gyro_y = FLT(0.98f, mpu6050_data_new.gyro_y, mpu6050_data.gyro_y);
+  mpu6050_data.gyro_z = FLT(0.98f, mpu6050_data_new.gyro_z, mpu6050_data.gyro_z);
 
 }
 
@@ -300,10 +306,10 @@ void pid_controller(uint8_t throttle_sp, float roll_sp, float roll, float pitch_
   PID(rollPid, rollErrBefore, roll, roll_sp, KP_ROLL, KI_ROLL, KD_ROLL, IMU_UPDATE_MILLIS / 1000.0f);
   PID(pitchPid, pitchErrBefore, pitch, pitch_sp, KP_PITCH, KI_PITCH, KD_PITCH, IMU_UPDATE_MILLIS / 1000.0f);
 
-  float m1f = throttle_sp - pitchPid.fields.U;
-  float m2f = throttle_sp - rollPid.fields.U;
-  float m3f = throttle_sp + rollPid.fields.U;
-  float m4f = throttle_sp + pitchPid.fields.U;
+  float m1f = throttle_sp - rollPid.fields.U + pitchPid.fields.U;
+  float m2f = throttle_sp + rollPid.fields.U + pitchPid.fields.U;
+  float m3f = throttle_sp + rollPid.fields.U - pitchPid.fields.U;
+  float m4f = throttle_sp - rollPid.fields.U - pitchPid.fields.U;
 
   throttle_command.motor_1_throttle = m1f > 255 ? 255 : m1f < 0 ? 0 : (uint8_t)(m1f);
   throttle_command.motor_2_throttle = m2f > 255 ? 255 : m2f < 0 ? 0 : (uint8_t)(m2f);
@@ -315,6 +321,9 @@ void pid_controller(uint8_t throttle_sp, float roll_sp, float roll, float pitch_
 
 void setup()
 {
+  pinMode(IMU_PWR, OUTPUT);
+  digitalWrite(IMU_PWR, LOW);
+
 // -------- MOTORS INIT ----------
   pinMode(MOTOR_1, OUTPUT);
   pinMode(MOTOR_2, OUTPUT);
@@ -395,6 +404,7 @@ void setup()
   };
 
   mpu6050.gyroByas();
+
 // -------- MPU6050 INIT --------
 
 // -------- UDP SERVER INIT --------
@@ -471,6 +481,7 @@ void loop()
     mpu6050_data.update_t = cur_t_micros;
 
     imuUpdate();
+    //memset(&mpu6050_data, 0x00, sizeof(mpu6050_data));
 
     attitudeFilter.update(mpu6050_data.accel_x,
                           mpu6050_data.accel_y,

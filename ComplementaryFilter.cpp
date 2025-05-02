@@ -5,8 +5,15 @@ ComplementaryFilter::ComplementaryFilter(float alpha)
 {
 }
 
+
 void ComplementaryFilter::update(float ax, float ay, float az, float gx, float gy, float gz, float dt)
 {
+    ay = -ay;
+    az = -az;
+    gx = gx;
+    gy = -gy;
+    gz = -gz;
+
     float accRoll  = atan2f(ay, az);
     float accPitch = atan2f(-ax, sqrtf(ay * ay + az * az));
 
@@ -16,10 +23,3 @@ void ComplementaryFilter::update(float ax, float ay, float az, float gx, float g
     yaw += gz * dt;
 }
 
-float ComplementaryFilter::getRollRad() const { return roll; }
-float ComplementaryFilter::getPitchRad() const { return pitch; }
-float ComplementaryFilter::getYawRad() const { return yaw; }
-
-float ComplementaryFilter::getRollDeg() const { return degrees(roll); }
-float ComplementaryFilter::getPitchDeg() const { return degrees(pitch); }
-float ComplementaryFilter::getYawDeg() const { return degrees(yaw); }

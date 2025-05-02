@@ -10,19 +10,46 @@ public:
 
     void update(float ax, float ay, float az, float gx, float gy, float gz, float dt);
 
-    float getRollRad() const;
-    float getPitchRad() const;
-    float getYawRad() const;
+    inline float getRollRad() const
+    {
+      return roll;
+    }
 
-    float getRollDeg() const;
-    float getPitchDeg() const;
-    float getYawDeg() const;
+
+    inline float getPitchRad() const
+    {
+      return pitch;
+    }
+
+
+    inline float getYawRad() const
+    {
+      return yaw;
+    }
+
+
+    inline float getRollDeg() const
+    {
+      return degrees(roll);
+    }
+
+
+    inline float getPitchDeg() const
+    {
+      return degrees(pitch);
+    }
+
+
+    inline float getYawDeg() const
+    {
+      return degrees(yaw);
+    }
 
 private:
     float alpha;
-    float roll;  // in radianti
-    float pitch; // in radianti
-    float yaw;   // in radianti
+    float roll;   // in radianti
+    float pitch;  // in radianti
+    float yaw;    // in radianti
 };
 
 #endif // COMPLEMENTARYFILTER_H
