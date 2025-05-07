@@ -16,6 +16,7 @@
 #define UDP_PORT 1234
 
 #define MOTOR_ARM_THRESHOLD 40
+#define MOTOR_MAX 200
 
 #define IMU_UPDATE_MILLIS 10
 
@@ -23,10 +24,10 @@
                        X
                      M4 M3
 **/
-#define MOTOR_1 6
-#define MOTOR_2 3
-#define MOTOR_3 20
-#define MOTOR_4 5
+#define MOTOR_1 2
+#define MOTOR_2 4
+#define MOTOR_3 5
+#define MOTOR_4 7
 
 #define IMU_PWR 10
 
@@ -520,8 +521,8 @@ void pid_controller(uint8_t throttle_sp, float roll_sp, float roll, float pitch_
 
   if (isArmed)
   {
-    PID(rollPid, rollErrBefore, roll, roll_sp, KP_ROLL, KI_ROLL, KD_ROLL, 255, IMU_UPDATE_MILLIS / 1000.0f);
-    PID(pitchPid, pitchErrBefore, pitch, pitch_sp, KP_PITCH, KI_PITCH, KD_PITCH, 255, IMU_UPDATE_MILLIS / 1000.0f);
+    PID(rollPid, rollErrBefore, roll, roll_sp, KP_ROLL, KI_ROLL, KD_ROLL, MOTOR_MAX, IMU_UPDATE_MILLIS / 1000.0f);
+    PID(pitchPid, pitchErrBefore, pitch, pitch_sp, KP_PITCH, KI_PITCH, KD_PITCH, MOTOR_MAX, IMU_UPDATE_MILLIS / 1000.0f);
 
     // Apply pid with the same scale as user command (0-255)
     m1f = throttle_sp + rollPid.fields.U + pitchPid.fields.U;
@@ -535,11 +536,11 @@ void pid_controller(uint8_t throttle_sp, float roll_sp, float roll, float pitch_
     m3f = m3f > 255 ? 255 : m3f < 0 ? 0 : (uint8_t)(m3f);
     m4f = m4f > 255 ? 255 : m4f < 0 ? 0 : (uint8_t)(m4f);
 
-    // Remap PID commands from [0-255] to [MOTOR_ARM_THRESHOLD, 255]
-    m1f = map(m1f, 0, 255, MOTOR_ARM_THRESHOLD, 255);
-    m2f = map(m2f, 0, 255, MOTOR_ARM_THRESHOLD, 255);
-    m3f = map(m3f, 0, 255, MOTOR_ARM_THRESHOLD, 255);
-    m4f = map(m4f, 0, 255, MOTOR_ARM_THRESHOLD, 255);
+    // Remap PID commands from [0-255] to [MOTOR_ARM_THRESHOLD, MOTOR_MAX]
+    m1f = map(m1f, 0, 255, MOTOR_ARM_THRESHOLD, MOTOR_MAX);
+    m2f = map(m2f, 0, 255, MOTOR_ARM_THRESHOLD, MOTOR_MAX);
+    m3f = map(m3f, 0, 255, MOTOR_ARM_THRESHOLD, MOTOR_MAX);
+    m4f = map(m4f, 0, 255, MOTOR_ARM_THRESHOLD, MOTOR_MAX);
   }
 
   throttle_command.motor_1_throttle = (uint8_t) m1f;
@@ -723,39 +724,43 @@ void loop()
 // ------- MOTORS UPDATE -------
   if (!test_motors)
   {    
-    int step1 = throttle_status.motor_1_throttle < throttle_command.motor_1_throttle ? 1 : -1;
-    int step2 = throttle_status.motor_2_throttle < throttle_command.motor_2_throttle ? 1 : -1;
-    int step3 = throttle_status.motor_3_throttle < throttle_command.motor_3_throttle ? 1 : -1;
-    int step4 = throttle_status.motor_4_throttle < throttle_command.motor_4_throttle ? 1 : -1;
+    //int step1 = 0;//throttle_status.motor_1_throttle < throttle_command.motor_1_throttle ? 1 : -1;
+    //int step2 = throttle_status.motor_2_throttle < throttle_command.motor_2_throttle ? 1 : -1;
+    //int step3 = throttle_status.motor_3_throttle < throttle_command.motor_3_throttle ? 1 : -1;
+    //int step4 = 0;//throttle_status.motor_4_throttle < throttle_command.motor_4_throttle ? 1 : -1;
 
-    uint16_t nSteps1 = abs((int16_t)(throttle_status.motor_1_throttle - throttle_command.motor_1_throttle));
-    uint16_t nSteps2 = abs((int16_t)(throttle_status.motor_2_throttle - throttle_command.motor_2_throttle));
-    uint16_t nSteps3 = abs((int16_t)(throttle_status.motor_3_throttle - throttle_command.motor_3_throttle));
-    uint16_t nSteps4 = abs((int16_t)(throttle_status.motor_4_throttle - throttle_command.motor_4_throttle));
-    uint16_t maxSteps = max(max(nSteps1, nSteps2), max(nSteps3, nSteps4));
+    //uint16_t nSteps1 = 0;//abs((int16_t)(throttle_status.motor_1_throttle - throttle_command.motor_1_throttle));
+    //uint16_t nSteps2 = abs((int16_t)(throttle_status.motor_2_throttle - throttle_command.motor_2_throttle));
+    //uint16_t nSteps3 = abs((int16_t)(throttle_status.motor_3_throttle - throttle_command.motor_3_throttle));
+    //uint16_t nSteps4 = 0;//abs((int16_t)(throttle_status.motor_4_throttle - throttle_command.motor_4_throttle));
+    //uint16_t maxSteps = max(max(nSteps1, nSteps2), max(nSteps3, nSteps4));
 
-    for (int i = 0; i < maxSteps; i++)
-    {
-      int m1pwm = throttle_status.motor_1_throttle + i * step1;
-      int m2pwm = throttle_status.motor_2_throttle + i * step2;
-      int m3pwm = throttle_status.motor_3_throttle + i * step3;
-      int m4pwm = throttle_status.motor_4_throttle + i * step4;
+    //for (int i = 0; i < maxSteps; i++)
+    //{
+      //int m1pwm = throttle_status.motor_1_throttle + i * step1;
+    //  int m2pwm = throttle_status.motor_2_throttle + i * step2;
+    //  int m3pwm = throttle_status.motor_3_throttle + i * step3;
+      //int m4pwm = throttle_status.motor_4_throttle + i * step4;
 
-      if (m1pwm <= throttle_command.motor_1_throttle && step4 > 0 ||
-          m1pwm >= throttle_command.motor_1_throttle && step4 < 0)
-        ledcWrite(MOTOR_1, m1pwm);
-      if (m2pwm <= throttle_command.motor_2_throttle && step2 > 0 ||
-          m2pwm >= throttle_command.motor_2_throttle && step2 < 0)
-        ledcWrite(MOTOR_2, m2pwm);
-      if (m3pwm <= throttle_command.motor_3_throttle && step3 > 0 ||
-          m3pwm >= throttle_command.motor_3_throttle && step3 < 0)
-        ledcWrite(MOTOR_3, m3pwm);
-      if (m4pwm <= throttle_command.motor_4_throttle && step4 > 0 ||
-          m4pwm >= throttle_command.motor_4_throttle && step4 < 0)
-        ledcWrite(MOTOR_4, m4pwm);
+      //if (m1pwm <= throttle_command.motor_1_throttle && step4 > 0 ||
+      //    m1pwm >= throttle_command.motor_1_throttle && step4 < 0)
+      //  ledcWrite(MOTOR_1, m1pwm);
+    //  if (m2pwm <= throttle_command.motor_2_throttle && step2 > 0 ||
+    //      m2pwm >= throttle_command.motor_2_throttle && step2 < 0)
+    //    ledcWrite(MOTOR_2, m2pwm);
+    //  if (m3pwm <= throttle_command.motor_3_throttle && step3 > 0 ||
+    //      m3pwm >= throttle_command.motor_3_throttle && step3 < 0)
+    //    ledcWrite(MOTOR_3, m3pwm);
+      //if (m4pwm <= throttle_command.motor_4_throttle && step4 > 0 ||
+      //    m4pwm >= throttle_command.motor_4_throttle && step4 < 0)
+      //  ledcWrite(MOTOR_4, m4pwm);
 
-      delayMicroseconds(10);
-    }
+    //  delayMicroseconds(10);
+    //}
+    ledcWrite(MOTOR_1, throttle_command.motor_1_throttle);
+    ledcWrite(MOTOR_2, throttle_command.motor_2_throttle);
+    ledcWrite(MOTOR_3, throttle_command.motor_3_throttle);
+    ledcWrite(MOTOR_4, throttle_command.motor_4_throttle);
 
     throttle_status.motor_1_throttle = throttle_command.motor_1_throttle;
     throttle_status.motor_2_throttle = throttle_command.motor_2_throttle;
